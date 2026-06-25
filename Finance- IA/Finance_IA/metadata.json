@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Aura - Consultor de Investimentos IA",
+  "description": "Plataforma IA inteligente para gestão de carteira ideal, testes de estresse financeiro e relatórios com Agente Aura monitoramos a bolsa em tempo real...",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
