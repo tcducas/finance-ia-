@@ -40,7 +40,7 @@ export function QuoteList({ quotes, onRemove, 'aria-label': ariaLabel }: QuoteLi
           className="group flex items-center gap-3 rounded-2xl border border-line bg-elevated px-4 py-3"
         >
           <Link
-            to={`/investimentos/${encodeURIComponent(q.ticker)}`}
+            to={`/app/investimentos/${encodeURIComponent(q.ticker)}`}
             className="min-w-0 flex-1 outline-none focus-visible:text-gold"
           >
             <p className="text-sm font-semibold">{q.ticker}</p>

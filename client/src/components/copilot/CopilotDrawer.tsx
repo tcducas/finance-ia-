@@ -1,6 +1,7 @@
 import { PiggyBank, Send, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { SuggestionBlock } from './SuggestionBlock';
+import { useAuth } from '../../context/AuthContext';
 import { useCopilot } from '../../context/CopilotContext';
 import { useFinance } from '../../context/FinanceContext';
 import { buildInsight } from '../../lib/insights';
@@ -35,6 +36,7 @@ const SCREEN_LABEL: Record<string, string> = {
 export function CopilotDrawer() {
   const { open, target, closeCopilot } = useCopilot();
   const { summary, spending, budgets } = useFinance();
+  const { profile } = useAuth();
 
   const [entries, setEntries] = useState<Entry[]>([]);
   const [input, setInput] = useState('');
@@ -49,6 +51,7 @@ export function CopilotDrawer() {
     spending,
     budgets,
     ticker: target.ticker,
+    profile: profile?.risk_profile ?? undefined,
   };
 
   useEffect(() => {

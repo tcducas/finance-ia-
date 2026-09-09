@@ -25,6 +25,8 @@ export interface ScreenSnapshot {
   spending: CategorySpending[];
   budgets: Budget[];
   ticker?: string;
+  /** Perfil de investidor (conservador|moderado|arrojado), quando definido. */
+  profile?: string;
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -82,6 +84,7 @@ export async function copilotAnalyze(
         aporte,
         screen: snapshot.screen,
         assetTicker: snapshot.ticker,
+        profile: snapshot.profile,
       });
       return { analysis, demo: false };
     } catch (err) {

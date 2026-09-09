@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { SpendingDonut } from '../components/charts/SpendingDonut';
 import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
+import { ActivationChecklist } from '../components/onboarding/ActivationChecklist';
 import { TransactionList } from '../components/transactions/TransactionList';
 import { StatCard } from '../components/ui/StatCard';
 import { useCopilot } from '../context/CopilotContext';
@@ -79,6 +80,8 @@ export function CarteiraPage() {
 
       {tab === 'fluxo' ? (
         <>
+          <ActivationChecklist />
+
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               icon={ArrowUpRight}

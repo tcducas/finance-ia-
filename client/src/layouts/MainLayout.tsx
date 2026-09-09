@@ -1,5 +1,6 @@
 import {
   ChartPie,
+  LogOut,
   Plus,
   Shield,
   Sparkles,
@@ -9,14 +10,14 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { CopilotDrawer } from '../components/copilot/CopilotDrawer';
 import { TransactionForm } from '../components/transactions/TransactionForm';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 import { useCopilot } from '../context/CopilotContext';
 import { useFinance } from '../context/FinanceContext';
 import { formatMonthYear } from '../lib/format';
-import { isDemoMode } from '../services/data';
 
 interface NavItem {
   to: string;
@@ -25,15 +26,15 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: 'Minha Carteira', icon: Wallet },
-  { to: '/gastos', label: 'Gastos', icon: ChartPie },
-  { to: '/planejamento', label: 'Planejamento', icon: Target },
-  { to: '/investimentos', label: 'Investimentos', icon: TrendingUp },
+  { to: '/app', label: 'Minha Carteira', icon: Wallet },
+  { to: '/app/gastos', label: 'Gastos', icon: ChartPie },
+  { to: '/app/planejamento', label: 'Planejamento', icon: Target },
+  { to: '/app/investimentos', label: 'Investimentos', icon: TrendingUp },
 ];
 
 const FOOTER_ITEMS: NavItem[] = [
-  { to: '/perfil', label: 'Perfil', icon: User },
-  { to: '/admin', label: 'Admin', icon: Shield },
+  { to: '/app/perfil', label: 'Perfil', icon: User },
+  { to: '/app/admin', label: 'Admin', icon: Shield },
 ];
 
 function navLinkClass(base: string) {
@@ -44,6 +45,17 @@ function navLinkClass(base: string) {
 export function MainLayout() {
   const { openCopilot } = useCopilot();
   const { openTransactionForm } = useFinance();
+  const { profile, configured, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const footerItems = FOOTER_ITEMS.filter(
+    (item) => item.to !== '/app/admin' || profile?.is_admin,
+  );
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/', { replace: true });
+  }
 
   return (
     <div className="flex min-h-dvh">
@@ -61,7 +73,7 @@ export function MainLayout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
+              end={to === '/app'}
               className={navLinkClass(
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-canvas',
               )}
@@ -73,10 +85,11 @@ export function MainLayout() {
         </nav>
 
         <div className="mt-6 flex flex-col gap-1 border-t border-line pt-4">
-          {FOOTER_ITEMS.map(({ to, label, icon: Icon }) => (
+          {footerItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
+              end
               className={navLinkClass(
                 'flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-canvas',
               )}
@@ -85,6 +98,16 @@ export function MainLayout() {
               {label}
             </NavLink>
           ))}
+          {configured && (
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-canvas hover:text-ink"
+            >
+              <LogOut className="size-4" aria-hidden />
+              Sair
+            </button>
+          )}
         </div>
       </aside>
 
@@ -98,10 +121,10 @@ export function MainLayout() {
           </div>
           <h1 className="flex items-center gap-2 text-base font-semibold md:text-xl">
             {formatMonthYear(new Date())}
-            {isDemoMode() && (
+            {!configured && (
               <span
                 className="rounded-full border border-line px-2 py-0.5 text-[10px] font-medium text-ink-muted"
-                title="Sem login configurado — os dados vivem só neste navegador (placeholder)."
+                title="Supabase não configurado — os dados vivem só neste navegador (placeholder)."
               >
                 demo
               </span>
@@ -146,7 +169,7 @@ export function MainLayout() {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === '/app'}
             className={navLinkClass(
               'flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors',
             )}

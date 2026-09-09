@@ -26,11 +26,17 @@ interface CopilotContextValue {
 
 const CopilotContext = createContext<CopilotContextValue | null>(null);
 
+/** Remove o prefixo /app das rotas do app autenticado. */
+function appPath(pathname: string): string {
+  return pathname.replace(/^\/app/, '') || '/';
+}
+
 function screenFromPath(pathname: string): string {
-  if (pathname.startsWith('/gastos')) return 'gastos';
-  if (pathname.startsWith('/planejamento')) return 'planejamento';
-  if (/^\/investimentos\/.+/.test(pathname)) return 'ativo';
-  if (pathname.startsWith('/investimentos')) return 'investimentos';
+  const p = appPath(pathname);
+  if (p.startsWith('/gastos')) return 'gastos';
+  if (p.startsWith('/planejamento')) return 'planejamento';
+  if (/^\/investimentos\/.+/.test(p)) return 'ativo';
+  if (p.startsWith('/investimentos')) return 'investimentos';
   return 'carteira';
 }
 
@@ -42,7 +48,9 @@ export function CopilotProvider({ children }: { children: ReactNode }) {
   const target = useMemo<CopilotTarget>(() => {
     const screen = screenFromPath(location.pathname);
     const ticker =
-      screen === 'ativo' ? decodeURIComponent(location.pathname.split('/')[2] ?? '') : undefined;
+      screen === 'ativo'
+        ? decodeURIComponent(appPath(location.pathname).split('/')[2] ?? '')
+        : undefined;
     return { screen, ticker, ...override };
   }, [location.pathname, override]);
 

@@ -32,6 +32,12 @@ export function getSessionToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/** Sincroniza o access_token do Supabase com a chave que os providers leem. */
+export function setSessionToken(token: string | null): void {
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
+}
+
 /** Modo demonstração: sem sessão, os dados vivem só neste navegador. */
 export function isDemoMode(): boolean {
   return getSessionToken() === null;

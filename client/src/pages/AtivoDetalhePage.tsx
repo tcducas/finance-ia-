@@ -52,7 +52,7 @@ export function AtivoDetalhePage() {
   return (
     <section aria-labelledby="ativo-titulo" className="mx-auto max-w-5xl space-y-6">
       <Link
-        to="/investimentos"
+        to="/app/investimentos"
         className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-gold"
       >
         <ArrowLeft className="size-4" aria-hidden />
