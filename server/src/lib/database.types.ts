@@ -12,6 +12,54 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          full_name: string | null;
+          is_admin: boolean;
+          onboarded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          full_name?: string | null;
+          is_admin?: boolean;
+          onboarded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          full_name?: string | null;
+          is_admin?: boolean;
+          onboarded_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      investor_profiles: {
+        Row: {
+          user_id: string;
+          risk_profile: 'conservador' | 'moderado' | 'arrojado';
+          answers: Json;
+          computed_at: string;
+        };
+        Insert: {
+          user_id: string;
+          risk_profile: 'conservador' | 'moderado' | 'arrojado';
+          answers?: Json;
+          computed_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          risk_profile?: 'conservador' | 'moderado' | 'arrojado';
+          answers?: Json;
+          computed_at?: string;
+        };
+        Relationships: [];
+      };
       transactions: {
         Row: {
           id: string;
