@@ -19,3 +19,18 @@ export function createUserClient(accessToken: string) {
 }
 
 export type UserClient = ReturnType<typeof createUserClient>;
+
+/**
+ * Cliente com a service role — ignora a RLS. Uso restrito a agregados
+ * administrativos (contagens globais), nunca em rota de usuário comum.
+ */
+export function createServiceClient() {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE) {
+    throw new AppError('Supabase (service role) não configurado.', 'SUPABASE_NOT_CONFIGURED', 503);
+  }
+  return createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+export type ServiceClient = ReturnType<typeof createServiceClient>;
