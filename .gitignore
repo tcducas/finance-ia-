@@ -9,6 +9,7 @@ dist/
 
 # Config local do Claude Code
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # SO / editor
 .DS_Store
