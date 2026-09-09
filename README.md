@@ -54,23 +54,28 @@ supabase/migrations/   # YYYYMMDDHHMMSS_*.sql
 - [x] **1.9 — IA**: `AiRouter` por tarefa (chat/explicações → Gemini; análise/aporte → Claude `claude-sonnet-5` com tool use forçado + `strict`); `anonymize.ts` com o contrato LGPD **testado** (percentuais/faixas/tickers entram; nome, CPF, e-mail, telefone, valores absolutos e ids nunca); `/api/ai/chat` (janela de 20 mensagens + contexto anonimizado da tela) e `/api/ai/analyze` (JSON "atual → sugerido" com cenário de mercado); sem chaves → `503 AI_NOT_CONFIGURED`.
 - [x] **1.10 — Copiloto drawer**: acessível de qualquer tela, entra sabendo o contexto (carteira/gastos/investimentos/ativo), insight proativo ao abrir, chat com histórico, consultor de aporte com bloco estruturado, "explicar este ativo" com kickoff automático, disclaimer permanente. Sem chaves de IA, opera em modo demonstração claramente marcado.
 - [x] **1.11 — Dashboard enriquecido**: cards da home ligados às fontes reais — receitas/despesas/saldo, fixos×variáveis, orçamento usado (%), patrimônio líquido e aporte do mês (clique abre o consultor do copiloto). Loading/erro/vazio tratados; zero mock nos números.
+- [x] **1.12 — Autenticação + onboarding + landing + admin**: migrations greenfield `profiles` (flag `is_admin`, `onboarded_at`, trigger `handle_new_user`) e `investor_profiles` (RLS own). Backend: `/api/me`, `/api/onboarding` (perfil de risco por regra pura em `riskScore.ts`), `requireAdmin` + `/api/admin/stats`. Client: landing pública em `/`, `/login` (Supabase Auth), quiz de perfil em `/onboarding`, app sob `/app/*` atrás de `RequireAuth`; `AuthContext` sincroniza o access_token com o provider HTTP — **login tira o app do modo demo automaticamente**. Perfil e Admin deixam de ser stub; ativação guiada na home.
 
 ## Ativando os serviços reais (quando quiser)
 
-O app roda 100% local em **modo demonstração** (dados no localStorage, selo "demo" na topbar). Para ligar cada serviço, preencha o `.env` (copie de `.env.example`):
+Sem `VITE_SUPABASE_*` o app roda em **modo demonstração** (dados no localStorage, selo "demo" na topbar). Para ligar cada serviço, preencha o `.env` (copie de `.env.example`):
 
 1. **IA** — `GEMINI_API_KEY` (chat) e `ANTHROPIC_API_KEY` (análise). Basta preencher e reiniciar: o copiloto sai do modo demo sozinho.
 2. **Mercado** — `BRAPI_TOKEN` (brapi.dev, plano gratuito) para cotações reais; sem ele, os movers do dia já funcionam e o resto usa dados de exemplo rotulados.
-3. **Supabase** — `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE`, `JWT_SECRET` (o *Legacy JWT Secret* do projeto). Depois aplique as migrations e regenere os tipos:
+3. **Supabase** — no backend `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE`, `JWT_SECRET` (o *Legacy JWT Secret* do projeto, HS256); no client `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Aplique as migrations e regenere os tipos:
    ```bash
    npx supabase link --project-ref <ref>
    npx supabase db push
    npx supabase gen types typescript --project-id <ref> > server/src/lib/database.types.ts
    ```
-   Falta ainda a tela de login (Supabase Auth) para o app trocar o provider local pelo HTTP — próxima etapa natural após a Fase 1.
+   Com o Supabase configurado, `/` mostra a landing, `/login` cuida do cadastro/login,
+   `/onboarding` roda o quiz de perfil (1x) e o app fica sob `/app/*`. O login troca o
+   provider local pelo HTTP sozinho. Para testar o cadastro sem caixa de e-mail, desligue
+   *Confirm email* em Authentication → Providers no painel do Supabase. Para acessar o
+   `/app/admin`, marque `is_admin = true` na linha do seu usuário em `profiles`.
 
 ## Testes
 
 ```bash
-npm test   # 34 testes (Vitest + Supertest): API, cache de mercado, anonimização, IA
+npm test   # 46 testes (Vitest + Supertest): API, cache de mercado, anonimização, IA, perfil/onboarding/admin
 ```

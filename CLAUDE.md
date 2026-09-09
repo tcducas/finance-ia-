@@ -103,4 +103,6 @@ supabase gen types typescript --project-id <id> > server/src/lib/database.types.
 - NÃO: cravar e-mail de admin no código — usar a flag is_admin.
 ## Fase atual
  
-Fase 1 (fundação): monorepo já reorganizado. Próximo: banco (transactions, budgets, assets + RLS), API, a home Minha Carteira, controle de gastos, acesso a ações e o copiloto conversacional. Ver o roadmap por tarefas no documento de evolução v0.4.
+Fase 1 concluída: monorepo, banco (profiles, investor_profiles, transactions, budgets, assets, watchlist, ai_* + RLS), API CRUD + resumo, home Minha Carteira, Gastos, mercado (proxy brapi), copiloto (Gemini+Claude), e — v0.5 tarefa 1.12 — autenticação Supabase, onboarding (quiz de perfil), landing pública, `requireAdmin` + painel Admin. App autenticado sob `/app/*`.
+
+Próximo: Fase 2 (v0.5) — tabela `goals`, motor de projeção (juros compostos, função pura), aba **Análise & Objetivos** (BI: KPIs, gráfico, cenários, tabela + export .xlsx) e telas de Planejamento. Isso adiciona o 5º destino de navegação. Ver o roadmap por tarefas na Especificação v0.5.
