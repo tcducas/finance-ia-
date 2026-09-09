@@ -1,0 +1,171 @@
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  ChartPie,
+  Landmark,
+  PiggyBank,
+  Repeat,
+  Sparkles,
+} from 'lucide-react';
+import { useState } from 'react';
+import { SpendingDonut } from '../components/charts/SpendingDonut';
+import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
+import { TransactionList } from '../components/transactions/TransactionList';
+import { StatCard } from '../components/ui/StatCard';
+import { useCopilot } from '../context/CopilotContext';
+import { useFinance } from '../context/FinanceContext';
+import { AssetList } from '../components/assets/AssetList';
+import { formatCurrency } from '../lib/format';
+
+type Tab = 'fluxo' | 'patrimonio';
+
+/** HOME — Minha Carteira: fluxo de caixa do mês + aba Patrimônio. */
+export function CarteiraPage() {
+  const { summary, spending, budgets, assets, loading, error } = useFinance();
+  const { openWith } = useCopilot();
+  const [tab, setTab] = useState<Tab>('fluxo');
+
+  // 1.11 — cards ligados às fontes reais (sem mock nos números).
+  const spentByCategory = new Map(spending.map((s) => [s.category, s.total]));
+  const budgetLimit = budgets.reduce((sum, b) => sum + b.monthly_limit, 0);
+  const budgetSpent = budgets.reduce(
+    (sum, b) => sum + (spentByCategory.get(b.category) ?? 0),
+    0,
+  );
+  const budgetPct = budgetLimit > 0 ? Math.round((budgetSpent / budgetLimit) * 100) : null;
+  const patrimonio = assets.reduce(
+    (sum, a) => sum + (a.is_liability ? -a.value : a.value),
+    0,
+  );
+  const aporteDisponivel = Math.max(0, summary.saldo);
+
+  return (
+    <section aria-labelledby="carteira-titulo" className="mx-auto max-w-6xl space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="carteira-titulo" className="text-2xl font-bold tracking-tight">
+            Minha Carteira
+          </h2>
+          <p className="text-sm text-ink-muted">Entradas, saídas e patrimônio do mês.</p>
+        </div>
+
+        <div role="tablist" aria-label="Seções da carteira" className="flex rounded-full border border-line bg-elevated p-1">
+          {(
+            [
+              { id: 'fluxo', label: 'Fluxo de caixa' },
+              { id: 'patrimonio', label: 'Patrimônio' },
+            ] as const
+          ).map(({ id, label }) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                tab === id ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && (
+        <p role="alert" className="rounded-2xl border border-line bg-elevated px-4 py-3 text-sm" style={{ color: 'var(--status-bad)' }}>
+          {error}
+        </p>
+      )}
+
+      {tab === 'fluxo' ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              icon={ArrowUpRight}
+              label="Receitas"
+              value={formatCurrency(summary.receitas)}
+              loading={loading}
+            />
+            <StatCard
+              icon={ArrowDownRight}
+              label="Despesas"
+              value={formatCurrency(summary.despesas)}
+              loading={loading}
+            />
+            <StatCard
+              icon={PiggyBank}
+              label="Saldo do mês"
+              value={formatCurrency(summary.saldo)}
+              loading={loading}
+            />
+            <StatCard
+              icon={Repeat}
+              label="Fixos × variáveis"
+              value={`${formatCurrency(summary.fixos)} × ${formatCurrency(summary.variaveis)}`}
+              hint="despesas recorrentes × pontuais"
+              loading={loading}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard
+              icon={ChartPie}
+              label="Orçamento usado"
+              value={budgetPct !== null ? `${budgetPct}%` : '—'}
+              hint={
+                budgetPct !== null
+                  ? `${formatCurrency(budgetSpent)} de ${formatCurrency(budgetLimit)} planejados`
+                  : 'defina limites na tela Gastos'
+              }
+              loading={loading}
+            />
+            <StatCard
+              icon={Landmark}
+              label="Patrimônio líquido"
+              value={formatCurrency(patrimonio)}
+              hint={assets.length === 0 ? 'cadastre na aba Patrimônio' : 'ativos − passivos'}
+              loading={loading}
+            />
+            <StatCard
+              icon={Sparkles}
+              label="Aporte do mês"
+              value={formatCurrency(aporteDisponivel)}
+              hint="saldo livre — toque para pedir direcionamento ao copiloto"
+              loading={loading}
+              onClick={() =>
+                openWith({
+                  screen: 'carteira',
+                  kickoff:
+                    aporteDisponivel > 0
+                      ? `Tenho ${formatCurrency(aporteDisponivel)} de saldo livre neste mês. Onde vale a pena alocar?`
+                      : 'Meu saldo do mês está zerado ou negativo. Como me organizo para conseguir aportar?',
+                })
+              }
+            />
+          </div>
+
+          <CopilotInsightCard />
+
+          <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
+                Movimentações
+              </h3>
+              <TransactionList />
+            </div>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
+                Gastos por categoria
+              </h3>
+              <div className="rounded-2xl border border-line bg-elevated p-4">
+                <SpendingDonut spending={spending} />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <AssetList />
+      )}
+    </section>
+  );
+}

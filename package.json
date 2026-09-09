@@ -1,0 +1,23 @@
+{
+  "name": "aura-finance",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Copiloto financeiro inteligente — direciona, não executa.",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev -w server",
+    "build": "npm run build -w client && npm run typecheck -w server",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck -w client && npm run typecheck -w server",
+    "test": "npm run test -w server --if-present && npm run test -w client --if-present"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
+}
