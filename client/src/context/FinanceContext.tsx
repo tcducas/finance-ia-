@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { getProvider } from '../services/data';
+import { getProvider, type ImportResult } from '../services/data';
 import type {
   Asset,
   AssetInput,
@@ -35,6 +35,8 @@ interface FinanceContextValue {
   addAsset(input: AssetInput): Promise<void>;
   updateAsset(id: string, input: Partial<AssetInput>): Promise<void>;
   removeAsset(id: string): Promise<void>;
+  importTransactions(rows: TransactionInput[]): Promise<ImportResult>;
+  importAssets(rows: AssetInput[]): Promise<ImportResult>;
   transactionFormOpen: boolean;
   openTransactionForm(): void;
   closeTransactionForm(): void;
@@ -164,6 +166,24 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const importTransactions = useCallback(
+    async (rows: TransactionInput[]) => {
+      const result = await getProvider().importTransactions(rows);
+      await refresh();
+      return result;
+    },
+    [refresh],
+  );
+
+  const importAssets = useCallback(
+    async (rows: AssetInput[]) => {
+      const result = await getProvider().importAssets(rows);
+      await refresh();
+      return result;
+    },
+    [refresh],
+  );
+
   const summary = useMemo(() => computeSummary(transactions), [transactions]);
   const spending = useMemo(() => computeSpending(transactions), [transactions]);
 
@@ -184,6 +204,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       addAsset,
       updateAsset,
       removeAsset,
+      importTransactions,
+      importAssets,
       transactionFormOpen,
       openTransactionForm: () => setTransactionFormOpen(true),
       closeTransactionForm: () => setTransactionFormOpen(false),
@@ -204,6 +226,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       addAsset,
       updateAsset,
       removeAsset,
+      importTransactions,
+      importAssets,
       transactionFormOpen,
     ],
   );

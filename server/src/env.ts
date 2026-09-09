@@ -23,7 +23,13 @@ const envSchema = z.object({
   GEMINI_MODEL: z.string().min(1).default('gemini-2.5-flash'),
 });
 
-const parsed = envSchema.safeParse(process.env);
+// Variável vazia (`CHAVE=` no .env) conta como não configurada — evita que uma
+// linha em branco quebre o boot e mantém os testes offline mesmo com .env local.
+const rawEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([, value]) => value !== undefined && value !== ''),
+);
+
+const parsed = envSchema.safeParse(rawEnv);
 
 if (!parsed.success) {
   console.error('Variáveis de ambiente inválidas:');

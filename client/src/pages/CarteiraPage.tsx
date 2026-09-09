@@ -6,10 +6,12 @@ import {
   PiggyBank,
   Repeat,
   Sparkles,
+  Upload,
 } from 'lucide-react';
 import { useState } from 'react';
 import { SpendingDonut } from '../components/charts/SpendingDonut';
 import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
+import { CsvImportDialog } from '../components/import/CsvImportDialog';
 import { ActivationChecklist } from '../components/onboarding/ActivationChecklist';
 import { TransactionList } from '../components/transactions/TransactionList';
 import { StatCard } from '../components/ui/StatCard';
@@ -25,6 +27,7 @@ export function CarteiraPage() {
   const { summary, spending, budgets, assets, loading, error } = useFinance();
   const { openWith } = useCopilot();
   const [tab, setTab] = useState<Tab>('fluxo');
+  const [importOpen, setImportOpen] = useState(false);
 
   // 1.11 — cards ligados às fontes reais (sem mock nos números).
   const spentByCategory = new Map(spending.map((s) => [s.category, s.total]));
@@ -151,9 +154,19 @@ export function CarteiraPage() {
 
           <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
-                Movimentações
-              </h3>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wide">
+                  Movimentações
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setImportOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-elevated px-3 py-1.5 text-xs font-medium transition-colors hover:border-gold hover:text-gold"
+                >
+                  <Upload className="size-3.5" aria-hidden />
+                  Importar CSV
+                </button>
+              </div>
               <TransactionList />
             </div>
             <div>
@@ -169,6 +182,12 @@ export function CarteiraPage() {
       ) : (
         <AssetList />
       )}
+
+      <CsvImportDialog
+        kind="transactions"
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+      />
     </section>
   );
 }

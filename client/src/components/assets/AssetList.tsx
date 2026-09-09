@@ -1,8 +1,9 @@
-import { Landmark, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Landmark, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { formatCurrency } from '../../lib/format';
 import type { Asset } from '../../types/finance';
+import { CsvImportDialog } from '../import/CsvImportDialog';
 import { EmptyState } from '../ui/EmptyState';
 import { StatCard } from '../ui/StatCard';
 import { AssetForm } from './AssetForm';
@@ -10,6 +11,7 @@ import { AssetForm } from './AssetForm';
 export function AssetList() {
   const { assets, loading, removeAsset } = useFinance();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
 
   const ativos = assets.filter((a) => !a.is_liability);
@@ -56,14 +58,24 @@ export function AssetList() {
         <h3 className="text-sm font-semibold text-ink-muted uppercase tracking-wide">
           Ativos e passivos
         </h3>
-        <button
-          type="button"
-          onClick={openNew}
-          className="flex items-center gap-1.5 rounded-full border border-line bg-elevated px-3 py-1.5 text-sm font-medium transition-colors hover:border-gold hover:text-gold"
-        >
-          <Plus className="size-4" aria-hidden />
-          Adicionar
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-line bg-elevated px-3 py-1.5 text-sm font-medium transition-colors hover:border-gold hover:text-gold"
+          >
+            <Upload className="size-4" aria-hidden />
+            Importar CSV
+          </button>
+          <button
+            type="button"
+            onClick={openNew}
+            className="flex items-center gap-1.5 rounded-full border border-line bg-elevated px-3 py-1.5 text-sm font-medium transition-colors hover:border-gold hover:text-gold"
+          >
+            <Plus className="size-4" aria-hidden />
+            Adicionar
+          </button>
+        </div>
       </div>
 
       {!loading && assets.length === 0 ? (
@@ -131,6 +143,7 @@ export function AssetList() {
       )}
 
       <AssetForm open={formOpen} onClose={() => setFormOpen(false)} editing={editing} />
+      <CsvImportDialog kind="assets" open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

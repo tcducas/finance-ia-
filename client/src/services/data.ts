@@ -24,6 +24,12 @@ export interface DataProvider {
   createAsset(input: AssetInput): Promise<Asset>;
   updateAsset(id: string, input: Partial<AssetInput>): Promise<Asset>;
   deleteAsset(id: string): Promise<void>;
+  importTransactions(rows: TransactionInput[]): Promise<ImportResult>;
+  importAssets(rows: AssetInput[]): Promise<ImportResult>;
+}
+
+export interface ImportResult {
+  inserted: number;
 }
 
 const TOKEN_KEY = 'aura-token';
@@ -101,6 +107,10 @@ const httpProvider: DataProvider = {
   deleteAsset: async (id) => {
     await http(`/api/assets/${id}`, { method: 'DELETE' });
   },
+  importTransactions: (rows) =>
+    http('/api/transactions/import', { method: 'POST', body: JSON.stringify({ rows }) }),
+  importAssets: (rows) =>
+    http('/api/assets/import', { method: 'POST', body: JSON.stringify({ rows }) }),
 };
 
 // ---------------------------------------------------------------------------
@@ -202,6 +212,33 @@ const localProvider: DataProvider = {
       K.assets,
       load<Asset>(K.assets).filter((a) => a.id !== id),
     );
+  },
+  async importTransactions(rows) {
+    const existing = load<Transaction>(K.transactions);
+    const created: Transaction[] = rows.map((input) => ({
+      id: crypto.randomUUID(),
+      type: input.type,
+      category: input.category,
+      amount: Math.round(input.amount * 100) / 100,
+      occurred_on: input.occurred_on,
+      description: input.description ?? null,
+      is_recurring: input.is_recurring ?? false,
+      created_at: new Date().toISOString(),
+    }));
+    save(K.transactions, [...created, ...existing]);
+    return { inserted: created.length };
+  },
+  async importAssets(rows) {
+    const existing = load<Asset>(K.assets);
+    const created: Asset[] = rows.map((input) => ({
+      id: crypto.randomUUID(),
+      kind: input.kind,
+      name: input.name,
+      value: Math.round(input.value * 100) / 100,
+      is_liability: input.is_liability ?? false,
+    }));
+    save(K.assets, [...existing, ...created]);
+    return { inserted: created.length };
   },
 };
 
