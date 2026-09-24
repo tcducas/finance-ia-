@@ -22,7 +22,11 @@ import { formatCurrency } from '../lib/format';
 
 type Tab = 'fluxo' | 'patrimonio';
 
-/** HOME — Minha Carteira: fluxo de caixa do mês + aba Patrimônio. */
+/**
+ * Tela: Minha Carteira — rota `/app` (index, HOME pós-login)
+ * Menu: "Minha Carteira" (1º item)
+ * Fluxo de caixa do mês (movimentações + gráfico por categoria) e aba Patrimônio.
+ */
 export function CarteiraPage() {
   const { summary, spending, budgets, assets, loading, error } = useFinance();
   const { openWith } = useCopilot();

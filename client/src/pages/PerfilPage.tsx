@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { RISK_LABEL } from '../lib/onboardingQuiz';
 
+/**
+ * Tela: Perfil — rota `/app/perfil`
+ * Menu: rodapé
+ * Dados da conta, perfil de risco (RISK_LABEL) e sair.
+ */
 export function PerfilPage() {
   const { profile, session, configured, signOut } = useAuth();
   const navigate = useNavigate();

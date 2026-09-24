@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { StatCard } from '../components/ui/StatCard';
 import { type AdminStats, fetchAdminStats } from '../services/account';
 
-/** Área administrativa — acesso controlado pela flag is_admin (RequireAdmin). */
+/**
+ * Tela: Admin — rota `/app/admin`
+ * Menu: rodapé (visível só para is_admin=true, protegida por RequireAdmin)
+ * Estatísticas globais da plataforma (usuários, transações, mensagens de IA).
+ */
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);

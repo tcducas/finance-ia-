@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext';
 
 type Mode = 'signin' | 'signup';
 
+/**
+ * Tela: Login/Cadastro — rota `/login` (pública)
+ * Menu: — (fora do app autenticado)
+ * Entrada/criação de conta via Supabase Auth; alterna signin/signup.
+ */
 export function LoginPage() {
   const { session, configured, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<Mode>('signin');

@@ -25,6 +25,11 @@ const FEATURES = [
   },
 ];
 
+/**
+ * Tela: Landing — rota `/` (pública)
+ * Menu: — (fora do app autenticado)
+ * Página de marketing; redireciona para /app se já houver sessão.
+ */
 export function LandingPage() {
   const { session, configured } = useAuth();
   if (configured && session) return <Navigate to="/app" replace />;

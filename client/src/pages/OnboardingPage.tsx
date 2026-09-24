@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { QUIZ } from '../lib/onboardingQuiz';
 import { submitOnboarding } from '../services/account';
 
+/**
+ * Tela: Onboarding — rota `/onboarding` (pública, pós-cadastro)
+ * Menu: — (fora do app autenticado)
+ * Quiz de perfil de investidor; calcula risco e salva em investor_profiles.
+ */
 export function OnboardingPage() {
   const { configured, session, profile, reloadProfile } = useAuth();
   const navigate = useNavigate();

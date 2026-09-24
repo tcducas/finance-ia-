@@ -12,7 +12,11 @@ import type { Movers, Quote, WatchlistItem } from '../types/market';
 
 const INDICES = ['^BVSP'];
 
-/** Investimentos — monitor: índices, watchlist e maiores altas/quedas do dia. */
+/**
+ * Tela: Investimentos (monitor) — rota `/app/investimentos`
+ * Menu: "Investimentos" (4º item)
+ * Índices, watchlist e maiores altas/quedas do dia. Ver também AtivoDetalhePage.
+ */
 export function MercadoPage() {
   const [indices, setIndices] = useState<Quote[]>([]);
   const [watchItems, setWatchItems] = useState<WatchlistItem[]>([]);

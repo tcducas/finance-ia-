@@ -7,7 +7,11 @@ import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useFinance } from '../context/FinanceContext';
 
-/** Gastos — orçamento por categoria, análise e alertas do copiloto. */
+/**
+ * Tela: Gastos — rota `/app/gastos`
+ * Menu: "Gastos" (2º item)
+ * Orçamento por categoria, análise de gastos e alertas do copiloto.
+ */
 export function OrcamentoPage() {
   const { budgets, spending, loading, removeBudget } = useFinance();
   const [formOpen, setFormOpen] = useState(false);

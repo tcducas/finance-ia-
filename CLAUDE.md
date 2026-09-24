@@ -28,7 +28,28 @@ Consolidada em **4 destinos principais** + copiloto e botão global (menos itens
 Persistentes em qualquer tela: **Copiloto** (drawer pela direita) e **botão "+" global** (lançar movimentação). Perfil e Admin ficam no rodapé. No mobile, o menu lateral vira barra inferior.
  
 Nomenclatura: **"Minha Carteira"** é a carteira financeira do mês (entradas/saídas). A carteira de investimentos chama-se **"Investimentos"** — nunca "carteira" sozinho, para não confundir.
- 
+
+### Mapa de telas
+
+Rotas centralizadas em `client/src/App.tsx`. Cada arquivo em `client/src/pages/` tem um header no topo
+(`Tela / Menu / o que faz`) — abra o arquivo para confirmar; esta tabela é o atalho.
+
+| Tela | Arquivo | Rota | Menu |
+|---|---|---|---|
+| Landing | `pages/LandingPage.tsx` | `/` | — (pública) |
+| Login/Cadastro | `pages/LoginPage.tsx` | `/login` | — (pública) |
+| Onboarding | `pages/OnboardingPage.tsx` | `/onboarding` | — (pública) |
+| Minha Carteira (HOME) | `pages/CarteiraPage.tsx` | `/app` | 1º item |
+| Gastos | `pages/OrcamentoPage.tsx` | `/app/gastos` | 2º item |
+| Planejamento | `pages/PlanejamentoPage.tsx` | `/app/planejamento` | 3º item |
+| Investimentos (monitor) | `pages/MercadoPage.tsx` | `/app/investimentos` | 4º item |
+| Detalhe do ativo | `pages/AtivoDetalhePage.tsx` | `/app/investimentos/:ticker` | sub-rota de Investimentos |
+| Perfil | `pages/PerfilPage.tsx` | `/app/perfil` | rodapé |
+| Admin | `pages/AdminPage.tsx` | `/app/admin` | rodapé (só is_admin) |
+
+Toda tela nova: registrar a rota em `App.tsx`, adicionar o header padrão no topo do arquivo da página
+e uma linha nesta tabela — nessa ordem, sempre os três juntos.
+
 ## Estrutura
  
 ```

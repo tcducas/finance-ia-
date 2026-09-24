@@ -1,7 +1,11 @@
 import { Target } from 'lucide-react';
 import { EmptyState } from '../components/ui/EmptyState';
 
-/** Planejamento — metas, projeções e score (Fase 2 do roadmap). */
+/**
+ * Tela: Planejamento — rota `/app/planejamento`
+ * Menu: "Planejamento" (3º item)
+ * Metas, projeções e score financeiro — stub "Em breve" (Fase 2 do roadmap).
+ */
 export function PlanejamentoPage() {
   return (
     <section aria-labelledby="planejamento-titulo" className="mx-auto max-w-5xl">

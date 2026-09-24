@@ -23,7 +23,11 @@ function Indicator({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Detalhe do ativo: gráfico de preço, indicadores e “explicar este ativo”. */
+/**
+ * Tela: Detalhe do ativo — rota `/app/investimentos/:ticker`
+ * Menu: sub-rota de "Investimentos" (sem item próprio no menu)
+ * Gráfico de preço, indicadores e "explicar este ativo" via copiloto.
+ */
 export function AtivoDetalhePage() {
   const { ticker = '' } = useParams();
   const { openWith } = useCopilot();
