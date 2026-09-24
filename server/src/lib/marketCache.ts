@@ -48,3 +48,8 @@ export class MarketCache {
 }
 
 export const marketCache = new MarketCache();
+
+// Catálogos (lista de tickers válidos por mercado) mudam pouco — TTL bem mais
+// longo. O dedupe de promessa em voo é essencial aqui: exchangeInfo/available
+// são chamadas caras; N requisições concorrentes no boot geram só UMA.
+export const catalogCache = new MarketCache(12 * 60 * 60 * 1000);

@@ -9,4 +9,6 @@ export const marketRouter = Router();
 
 marketRouter.get('/quotes', controller.quotes);
 marketRouter.get('/movers', controller.movers);
+marketRouter.get('/search', controller.search);
+marketRouter.get('/validate/:ticker', controller.validate);
 marketRouter.get('/asset/:ticker', controller.asset);
