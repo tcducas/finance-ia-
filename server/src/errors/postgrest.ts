@@ -1,10 +1,11 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import { AppError } from './AppError.js';
+import { logger } from '../lib/logger.js';
 
 /** Converte erro do PostgREST em AppError sem vazar detalhes (nem PII) na resposta. */
 export function fromPostgrest(error: PostgrestError): AppError {
   // Log mínimo: só o código SQLSTATE — a mensagem pode conter valores do usuário.
-  console.error(`[db] erro ${error.code}`);
+  logger.error({ dbErrorCode: error.code }, '[db] erro');
 
   switch (error.code) {
     case '23505':

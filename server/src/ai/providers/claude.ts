@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../../env.js';
 import { AppError } from '../../errors/AppError.js';
+import { logger } from '../../lib/logger.js';
 import { DISCLAIMER } from '../prompts.js';
 
 /**
@@ -88,7 +89,7 @@ export async function claudeAnalyze(
     });
   } catch (error) {
     if (error instanceof Anthropic.APIError) {
-      console.error(`[ai] claude status ${error.status}`);
+      logger.error({ provider: 'claude', status: error.status }, '[ai] provedor indisponível');
       throw new AppError('Provedor de IA indisponível no momento.', 'AI_UNAVAILABLE', 502);
     }
     throw new AppError('Provedor de IA indisponível no momento.', 'AI_UNAVAILABLE', 502);

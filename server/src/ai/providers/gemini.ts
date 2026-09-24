@@ -1,5 +1,6 @@
 import { env } from '../../env.js';
 import { AppError } from '../../errors/AppError.js';
+import { logger } from '../../lib/logger.js';
 
 export interface ChatTurn {
   role: 'user' | 'assistant';
@@ -50,7 +51,7 @@ export async function geminiChat(
   }
 
   if (!res.ok) {
-    console.error(`[ai] gemini status ${res.status}`);
+    logger.error({ provider: 'gemini', status: res.status }, '[ai] provedor indisponível');
     throw new AppError('Provedor de IA indisponível no momento.', 'AI_UNAVAILABLE', 502);
   }
 
