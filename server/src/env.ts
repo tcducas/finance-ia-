@@ -21,6 +21,16 @@ const envSchema = z.object({
   // Modelos de IA (defaults sensatos; sobrescreva se quiser).
   CLAUDE_MODEL: z.string().min(1).default('claude-sonnet-5'),
   GEMINI_MODEL: z.string().min(1).default('gemini-2.5-flash'),
+  // Qual provedor está ativo agora — trocar para 'claude' depois é só isso.
+  AI_PROVIDER: z.enum(['gemini', 'claude']).default('gemini'),
+  // Mercado cripto (Binance), só leitura, sem API key. 451 por região? troque a base.
+  BINANCE_BASE_URL: z.string().url().default('https://api.binance.com'),
+  // Nº de proxies reversos na frente do server (exigido pelo express-rate-limit).
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  // Origens de CORS separadas por vírgula; ausente = sem CORS (monorepo same-origin).
+  CORS_ORIGINS: z.string().min(1).optional(),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  RATE_LIMIT_DISABLED: z.coerce.boolean().default(false),
 });
 
 // Variável vazia (`CHAVE=` no .env) conta como não configurada — evita que uma
@@ -41,6 +51,12 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 
+const SEMPRE_OBRIGATORIAS = ['JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE'] as const;
+
+const obrigatoriasEmProducao: string[] = [...SEMPRE_OBRIGATORIAS];
+if (env.AI_PROVIDER === 'gemini') obrigatoriasEmProducao.push('GEMINI_API_KEY');
+if (env.AI_PROVIDER === 'claude') obrigatoriasEmProducao.push('ANTHROPIC_API_KEY');
+
 const pendentes = (
   [
     'JWT_SECRET',
@@ -52,7 +68,15 @@ const pendentes = (
   ] as const
 ).filter((key) => env[key] === undefined);
 
-if (pendentes.length > 0 && env.NODE_ENV !== 'test') {
+if (env.NODE_ENV === 'production') {
+  // Em produção, faltar uma dessas quebra o boot com uma mensagem clara — em vez
+  // de subir "funcionando" e devolver 503 silencioso a cada request autenticado.
+  const faltando = obrigatoriasEmProducao.filter((key) => env[key as keyof typeof env] === undefined);
+  if (faltando.length > 0) {
+    console.error(`Variáveis obrigatórias em produção ausentes: ${faltando.join(', ')}`);
+    process.exit(1);
+  }
+} else if (pendentes.length > 0 && env.NODE_ENV !== 'test') {
   console.warn(
     `[env] Variáveis ainda não configuradas (necessárias nas próximas tarefas): ${pendentes.join(', ')}`,
   );
