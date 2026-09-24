@@ -1,5 +1,10 @@
+import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
+import { env } from './env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { apiLimiter, aiLimiter, marketLimiter } from './middlewares/rateLimit.js';
+import { requestContext } from './middlewares/requestContext.js';
 import { requireAdmin } from './middlewares/requireAdmin.js';
 import { requireAuth } from './middlewares/requireAuth.js';
 import { adminRouter } from './routes/admin.js';
@@ -17,11 +22,31 @@ import { watchlistRouter } from './routes/watchlist.js';
 export function createApp(): express.Express {
   const app = express();
 
-  app.use(express.json());
+  // Nº de proxies reversos na frente do server — exigido para o rate limit
+  // identificar o IP real em vez do IP do proxy (0 em localhost/dev).
+  app.set('trust proxy', env.TRUST_PROXY);
+
+  app.use(requestContext);
+  app.use(
+    helmet({
+      // O Vite middleware (dev) precisa de inline/eval + websocket do HMR;
+      // em produção o client já é build estático, CSP padrão do helmet serve.
+      contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false,
+    }),
+  );
+  if (env.CORS_ORIGINS) {
+    const origins = env.CORS_ORIGINS.split(',').map((origin) => origin.trim());
+    app.use(cors({ origin: origins, credentials: true }));
+  }
+  // Limite maior que o default (100kb): o import de carteira aceita até 2000
+  // linhas de CSV no corpo da requisição.
+  app.use(express.json({ limit: '1mb' }));
+
+  app.use('/api', apiLimiter);
 
   app.use('/api/health', healthRouter);
   // Público: não expõe dado de usuário; a chave externa fica no backend.
-  app.use('/api/market', marketRouter);
+  app.use('/api/market', marketLimiter, marketRouter);
   app.use('/api/me', requireAuth, meRouter);
   app.use('/api/onboarding', requireAuth, onboardingRouter);
   app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
@@ -30,7 +55,7 @@ export function createApp(): express.Express {
   app.use('/api/budgets', requireAuth, budgetsRouter);
   app.use('/api/assets', requireAuth, assetsRouter);
   app.use('/api/summary', requireAuth, summaryRouter);
-  app.use('/api/ai', requireAuth, aiRouter);
+  app.use('/api/ai', requireAuth, aiLimiter, aiRouter);
 
   // 404 padrão para rotas de API desconhecidas.
   app.use('/api', (_req, res) => {
