@@ -18,7 +18,7 @@ export function ActivationChecklist() {
         <button
           type="button"
           onClick={openTransactionForm}
-          className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-white hover:bg-gold-strong"
+          className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-on-gold hover:bg-gold-strong"
         >
           <Plus className="size-3.5" aria-hidden />
           Adicionar

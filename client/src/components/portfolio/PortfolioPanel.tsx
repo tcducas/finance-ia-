@@ -145,7 +145,7 @@ export function PortfolioPanel() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
           >
             <Upload className="size-4" aria-hidden />
             Importar CSV

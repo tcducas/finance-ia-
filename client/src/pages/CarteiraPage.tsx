@@ -76,7 +76,7 @@ export function CarteiraPage() {
               aria-selected={tab === id}
               onClick={() => setTab(id)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                tab === id ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                tab === id ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
               }`}
             >
               {label}

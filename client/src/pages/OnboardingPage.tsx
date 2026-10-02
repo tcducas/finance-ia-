@@ -90,7 +90,7 @@ export function OnboardingPage() {
         type="button"
         disabled={!complete || busy}
         onClick={() => void finish()}
-        className="mt-8 w-full rounded-full bg-gold px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-50"
+        className="mt-8 w-full rounded-full bg-gold px-4 py-3 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-50"
       >
         {busy ? 'Salvando…' : 'Concluir e entrar'}
       </button>

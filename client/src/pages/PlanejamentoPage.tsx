@@ -108,7 +108,7 @@ export function PlanejamentoPage() {
               aria-checked={horizon === h.months}
               onClick={() => setHorizon(h.months)}
               className={`rounded-full px-3 py-1 font-medium transition-colors ${
-                horizon === h.months ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                horizon === h.months ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
               }`}
             >
               {h.label}
@@ -132,7 +132,7 @@ export function PlanejamentoPage() {
               setEditing(null);
               setFormOpen(true);
             }}
-            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
           >
             <Plus className="size-4" aria-hidden />
             Nova meta

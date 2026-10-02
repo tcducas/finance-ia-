@@ -3,20 +3,23 @@
 /* ---------------------------------------------------------------------------
  * Design tokens — Aura Finance
  * Clean + tech: muito respiro, tipografia Inter, acento dourado único,
- * camada tech discreta (grid + glow) no fundo. Temas claro e escuro.
+ * glow dourado discreto no topo. Temas claro (cartão bege) e escuro.
  * ------------------------------------------------------------------------ */
 
 :root,
 :root[data-theme='light'] {
   --canvas: #faf8f3;
-  --elevated: #ffffff;
+  /* Cartões em bege (não branco): o branco puro "estourava" sobre o creme. */
+  --elevated: #f3ecdf;
   --ink: #1c1a16;
   --ink-muted: #6e6653;
   --gold: #b8860b;
   --gold-strong: #9a7008;
-  --line: #e7e0d2;
+  --line: #e0d5c1;
+  /* Segundo degrau de superfície (linhas de lista, campos) e texto sobre o dourado. */
+  --elevated-2: #ebe2d1;
+  --on-gold: #ffffff;
   --glow-opacity: 0.05;
-  --grid-opacity: 0.35;
   color-scheme: light;
 
   /* Gráficos — paleta categórica validada (CVD/contraste) p/ superfície clara. */
@@ -36,18 +39,22 @@
 }
 
 :root[data-theme='dark'] {
-  --canvas: #141414;
-  --elevated: #1c1c1c;
-  --ink: #f4f1ea;
-  --ink-muted: #a39c8c;
+  /* "Grafite Apple": preto puro, cartões em degraus de cinza frio, dourado como
+     única cor. Sem glow — o acento sozinho carrega a atenção. */
+  --canvas: #000000;
+  --elevated: #1c1c1e;
+  --elevated-2: #2c2c2e;
+  --ink: #f5f5f7;
+  --ink-muted: #98989d;
   --gold: #d4af37;
   --gold-strong: #e4c15a;
-  --line: #2c2c2c;
-  --glow-opacity: 0.07;
-  --grid-opacity: 0.5;
+  /* Texto escuro sobre dourado: branco dava ~2:1 e reprovava o WCAG AA. */
+  --on-gold: #141414;
+  --line: #38383a;
+  --glow-opacity: 0;
   color-scheme: dark;
 
-  /* Gráficos — passos próprios do tema escuro, validados contra #141414. */
+  /* Gráficos — passos próprios do tema escuro (validados contra #141414; no #000 o contraste só sobe). */
   --chart-1: #b8860b;
   --chart-2: #3b82f6;
   --chart-3: #ec4899;
@@ -66,6 +73,8 @@
 @theme inline {
   --color-canvas: var(--canvas);
   --color-elevated: var(--elevated);
+  --color-elevated-2: var(--elevated-2);
+  --color-on-gold: var(--on-gold);
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-gold: var(--gold);
@@ -82,6 +91,13 @@ body,
   min-height: 100dvh;
 }
 
+/* Âncoras da landing rolam suave; quem pede menos movimento pula direto. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   background-color: var(--canvas);
   color: var(--ink);
@@ -92,34 +108,19 @@ body {
     color 200ms ease;
 }
 
-/* Camada tech discreta: grid sutil + glow dourado no topo. */
+/* Glow dourado discreto no topo (o quadriculado de fundo foi removido). */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-size:
-    100% 100%,
-    3rem 3rem,
-    3rem 3rem;
   mask-image: linear-gradient(to bottom, rgb(0 0 0 / 60%), rgb(0 0 0 / 15%) 40rem);
-  background-image:
-    radial-gradient(
-      60rem 30rem at 70% -10%,
-      color-mix(in srgb, var(--gold) calc(var(--glow-opacity) * 100%), transparent),
-      transparent 70%
-    ),
-    linear-gradient(
-      to right,
-      color-mix(in srgb, var(--line) calc(var(--grid-opacity) * 100%), transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--line) calc(var(--grid-opacity) * 100%), transparent) 1px,
-      transparent 1px
-    );
+  background-image: radial-gradient(
+    60rem 30rem at 70% -10%,
+    color-mix(in srgb, var(--gold) calc(var(--glow-opacity) * 100%), transparent),
+    transparent 70%
+  );
 }
 
 :focus-visible {

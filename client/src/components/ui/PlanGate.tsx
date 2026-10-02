@@ -21,7 +21,7 @@ export function PlanGate({ title, description }: PlanGateProps) {
       <p className="mt-1 max-w-md text-sm text-ink-muted">{description}</p>
       <Link
         to="/app/plano"
-        className="mt-5 rounded-full bg-gold px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+        className="mt-5 rounded-full bg-gold px-4 py-2 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
       >
         Ver os planos
       </Link>

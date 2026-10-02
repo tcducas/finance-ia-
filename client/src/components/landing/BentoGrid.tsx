@@ -47,7 +47,7 @@ function Cell({ span = 'unit', icon: Icon, title, text, accent, children }: Cell
     >
       <span
         className={`mb-3 grid size-9 shrink-0 place-items-center rounded-xl ${
-          accent ? 'bg-gold text-white' : 'border border-line bg-canvas text-gold'
+          accent ? 'bg-gold text-on-gold' : 'border border-line bg-canvas text-gold'
         }`}
       >
         <Icon className="size-4.5" aria-hidden />

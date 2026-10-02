@@ -156,7 +156,7 @@ export function PatrimonioEvolution() {
                 aria-checked={months === w.months}
                 onClick={() => setMonths(w.months)}
                 className={`rounded-full px-3 py-1 font-medium transition-colors ${
-                  months === w.months ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                  months === w.months ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
                 }`}
               >
                 {w.label}

@@ -195,7 +195,7 @@ export function CopilotDrawer() {
                 key={entry.id}
                 className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${
                   entry.role === 'user'
-                    ? 'ml-auto bg-gold text-white'
+                    ? 'ml-auto bg-gold text-on-gold'
                     : 'border border-line bg-canvas'
                 }`}
               >
@@ -233,7 +233,7 @@ export function CopilotDrawer() {
           <button
             type="submit"
             disabled={busy}
-            className="rounded-xl bg-gold px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+            className="rounded-xl bg-gold px-3 py-1.5 text-xs font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
           >
             Sugerir
           </button>
@@ -254,7 +254,7 @@ export function CopilotDrawer() {
             type="submit"
             disabled={busy || input.trim().length === 0}
             aria-label="Enviar mensagem"
-            className="grid size-9 shrink-0 place-items-center rounded-xl bg-gold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+            className="grid size-9 shrink-0 place-items-center rounded-xl bg-gold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
           >
             <Send className="size-4" />
           </button>

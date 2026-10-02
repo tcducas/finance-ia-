@@ -148,11 +148,11 @@ export function HeroProductPanel() {
       {/* Barra da "janela", para o painel ler como produto e não como ilustração. */}
       <div className="mb-3 flex items-center justify-between px-2 pt-1">
         <div className="flex items-center gap-2">
-          <span className="grid size-6 place-items-center rounded-lg bg-gold text-[11px] font-extrabold text-white">
+          <span className="grid size-6 place-items-center rounded-lg bg-gold text-[11px] font-extrabold text-on-gold">
             A
           </span>
           <span className="text-xs font-semibold">Outubro de 2026</span>
-          <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase">
+          <span className="rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-on-gold uppercase">
             Pro
           </span>
         </div>
@@ -282,7 +282,7 @@ export function HeroProductPanel() {
 
         {/* Copiloto */}
         <div className="flex items-start gap-2.5 rounded-2xl border border-gold/40 bg-canvas p-3.5">
-          <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-gold text-white">
+          <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-gold text-on-gold">
             <Sparkles className="size-3.5" aria-hidden />
           </span>
           <p className="text-[11px] leading-relaxed text-ink-muted">

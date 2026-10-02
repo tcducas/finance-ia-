@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, Sparkles, Star } from 'lucide-react';
+import { Clock, Sparkles, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -56,14 +56,6 @@ export function AtivoDetalhePage() {
 
   return (
     <section aria-labelledby="ativo-titulo" className="mx-auto max-w-6xl space-y-6">
-      <Link
-        to="/app/investimentos"
-        className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-gold"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        Voltar ao monitor
-      </Link>
-
       {placeholder && (
         <p role="status" className="rounded-2xl border border-line bg-elevated px-4 py-2.5 text-xs text-ink-muted">
           <strong>Dados de exemplo</strong> — valores fictícios para demonstração (API de mercado
@@ -120,7 +112,7 @@ export function AtivoDetalhePage() {
                     kickoff: `Explique o ativo ${asset.ticker} de forma didática: o que é, fundamentos e riscos.`,
                   })
                 }
-                className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+                className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
               >
                 <Sparkles className="size-4" aria-hidden />
                 Explicar este ativo
@@ -137,7 +129,7 @@ export function AtivoDetalhePage() {
                   aria-selected={range === r.id}
                   onClick={() => setRange(r.id)}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    range === r.id ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                    range === r.id ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
                   }`}
                 >
                   {r.label}

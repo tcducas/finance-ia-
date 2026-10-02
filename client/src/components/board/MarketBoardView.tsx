@@ -107,7 +107,7 @@ export function MarketBoardView({
                 }. Explique também os riscos deste mercado para quem está começando.`,
               })
             }
-            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+            className="flex items-center gap-1.5 rounded-full bg-gold px-3 py-1.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
           >
             <Sparkles className="size-4" aria-hidden />
             Explicar este board
@@ -134,7 +134,7 @@ export function MarketBoardView({
             onClick={() => selectSymbol(pair.symbol)}
             className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
               symbol === pair.symbol
-                ? 'border-gold bg-gold text-white'
+                ? 'border-gold bg-gold text-on-gold'
                 : 'border-line bg-elevated text-ink-muted hover:border-gold hover:text-gold'
             }`}
           >
@@ -212,7 +212,7 @@ export function MarketBoardView({
                     aria-checked={board.interval === i}
                     onClick={() => setInterval(i)}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      board.interval === i ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                      board.interval === i ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
                     }`}
                   >
                     {intervalLabel(i)}

@@ -12,6 +12,21 @@ um cargo técnico, e um admin em Pro implícito nunca veria o app como um usuár
 Nenhum e-mail de admin é cravado no código. O primeiro admin nasce de um `UPDATE` manual; a
 partir daí, planos são concedidos pela tela Admin.
 
+`is_admin`, `plan` e `plan_updated_at` **não são graváveis pelo cliente**: a migration
+`20261002090000_lock_profile_privileged_columns` deixa o usuário atualizar só `full_name` e
+`onboarded_at`. Sem isso, qualquer conta logada se promovia a admin com a anon key.
+
+## 0. Via script (recomendado)
+
+Cadastre-se no app (`/login`) e confirme o e-mail. Depois, com `SUPABASE_SERVICE_ROLE` no `.env`:
+
+```
+npm run grant-admin -w server -- <SEU_EMAIL> --pro
+```
+
+Sem `--pro` só vira admin. O script imprime `is_admin` e `plan` da linha alterada; e-mail sem
+perfil sai com erro. Saia e entre de novo no app para o `/api/me` refletir.
+
 ## 1. Primeiro admin (uma vez, no SQL Editor do Supabase)
 
 Troque `<SEU_EMAIL>` pelo e-mail **exatamente como está em `auth.users`** — se errar, o update

@@ -79,7 +79,7 @@ export function TransactionForm() {
               onClick={() => switchType(option)}
               className={`rounded-xl border px-3 py-2 text-sm font-medium capitalize transition-colors ${
                 type === option
-                  ? 'border-gold bg-gold text-white'
+                  ? 'border-gold bg-gold text-on-gold'
                   : 'border-line bg-canvas text-ink-muted hover:text-ink'
               }`}
             >
@@ -176,7 +176,7 @@ export function TransactionForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+          className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
         >
           {submitting ? 'Salvando…' : 'Salvar movimentação'}
         </button>

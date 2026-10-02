@@ -119,7 +119,7 @@ export function CsvImportDialog({ open, onClose, kind }: CsvImportDialogProps) {
           <button
             type="button"
             onClick={handleClose}
-            className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-white hover:bg-gold-strong"
+            className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-on-gold hover:bg-gold-strong"
           >
             Concluir
           </button>
@@ -177,7 +177,7 @@ export function CsvImportDialog({ open, onClose, kind }: CsvImportDialogProps) {
             type="button"
             disabled={busy || !parsed || parsed.rows.length === 0}
             onClick={() => void handleImport()}
-            className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+            className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
           >
             {busy
               ? 'Importando…'

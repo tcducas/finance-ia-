@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { LineChart, Lock, ShieldCheck } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 type Mode = 'signin' | 'signup';
@@ -12,7 +12,11 @@ type Mode = 'signin' | 'signup';
  */
 export function LoginPage() {
   const { session, configured, signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<Mode>('signin');
+  const [searchParams] = useSearchParams();
+  // `/login?modo=cadastro` (CTA "Criar conta" da landing) já abre no cadastro.
+  const [mode, setMode] = useState<Mode>(
+    searchParams.get('modo') === 'cadastro' ? 'signup' : 'signin',
+  );
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,7 +74,7 @@ export function LoginPage() {
               setNotice(null);
             }}
             className={`flex-1 rounded-full px-4 py-1.5 font-medium transition-colors ${
-              mode === m ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+              mode === m ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
             }`}
           >
             {m === 'signin' ? 'Entrar' : 'Criar conta'}
@@ -127,7 +131,7 @@ export function LoginPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+          className="w-full rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
         >
           {busy ? 'Aguarde…' : mode === 'signin' ? 'Entrar' : 'Criar conta'}
         </button>
@@ -146,7 +150,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="grid place-items-center px-6 py-10">
         <div className="w-full max-w-sm">
           <Link to="/" className="mb-8 flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-white">
+            <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-on-gold">
               A
             </span>
             <span className="font-display text-lg font-bold tracking-tight">Aura Finance</span>

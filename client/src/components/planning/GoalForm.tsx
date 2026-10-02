@@ -211,7 +211,7 @@ export function GoalForm({ open, goal, onClose, onSave }: GoalFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gold-strong disabled:opacity-60"
+          className="w-full rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong disabled:opacity-60"
         >
           {submitting ? 'Salvando…' : goal ? 'Salvar alterações' : 'Criar meta'}
         </button>

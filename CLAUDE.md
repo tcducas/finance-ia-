@@ -26,10 +26,14 @@ Consolidada em **4 destinos principais** + copiloto e botão global (menos itens
 3. **Planejamento** — metas, projeções, score.
 4. **Investimentos** — carteira, mercado (monitor + detalhe do ativo), montar/importar.
 Os boards de mercado ficam num grupo **"Mercados"** no menu, abaixo dos destinos principais:
-Investimentos (panorama), Ações B3, Cripto e Internacional — cada um com rota própria. No mobile a
-barra inferior mostra os 3 destinos + um atalho "Mercados".
+Ações B3, Cripto e Internacional — cada um com rota própria. No mobile a barra inferior mostra os
+4 destinos + **"Mais"**, um sheet com Mercados, Conta (Perfil, Planos, Admin), tema e Sair.
 
-Persistentes em qualquer tela: **Copiloto** (drawer pela direita) e **botão "+" global** (lançar movimentação). Perfil e Admin ficam no rodapé. No mobile, o menu lateral vira barra inferior.
+A navegação tem fonte única em `client/src/lib/navigation.ts` (itens, destaque ativo por
+`match`, título da topbar e "voltar" de sub-rota via `routeMeta`). Sidebar, topbar e barra mobile
+leem dali — tela nova entra nessa lista também.
+
+Persistentes em qualquer tela: **Copiloto** (drawer pela direita) e **botão "+" global** (lançar movimentação). Perfil, Planos e Admin ficam no rodapé (sidebar recolhível). No mobile, o menu lateral vira barra inferior.
  
 Nomenclatura: **"Minha Carteira"** é a carteira financeira do mês (entradas/saídas). A carteira de investimentos chama-se **"Investimentos"** — nunca "carteira" sozinho, para não confundir.
 
@@ -46,7 +50,7 @@ Rotas centralizadas em `client/src/App.tsx`. Cada arquivo em `client/src/pages/`
 | Minha Carteira (HOME) | `pages/CarteiraPage.tsx` | `/app` | 1º item |
 | Gastos | `pages/OrcamentoPage.tsx` | `/app/gastos` | 2º item |
 | Planejamento | `pages/PlanejamentoPage.tsx` | `/app/planejamento` | 3º item |
-| Investimentos (panorama) | `pages/MercadoPage.tsx` | `/app/investimentos` | grupo Mercados |
+| Investimentos (panorama) | `pages/MercadoPage.tsx` | `/app/investimentos` | 4º item |
 | Detalhe do ativo | `pages/AtivoDetalhePage.tsx` | `/app/investimentos/:ticker` | sub-rota de Investimentos |
 | Ações B3 (board) | `pages/AcoesB3Page.tsx` | `/app/acoes` | grupo Mercados |
 | Cripto (board) | `pages/CriptoPage.tsx` | `/app/cripto` | grupo Mercados |
@@ -55,8 +59,8 @@ Rotas centralizadas em `client/src/App.tsx`. Cada arquivo em `client/src/pages/`
 | Planos | `pages/PlanoPage.tsx` | `/app/plano` | rodapé |
 | Admin | `pages/AdminPage.tsx` | `/app/admin` | rodapé (só is_admin) |
 
-Toda tela nova: registrar a rota em `App.tsx`, adicionar o header padrão no topo do arquivo da página
-e uma linha nesta tabela — nessa ordem, sempre os três juntos.
+Toda tela nova: registrar a rota em `App.tsx`, adicionar o item em `lib/navigation.ts`, o header padrão no topo do arquivo da página
+e uma linha nesta tabela — nessa ordem, sempre os quatro juntos.
 
 ## Estrutura
  
@@ -66,12 +70,15 @@ server/   # Express + tsx     (routes, controllers, services, middlewares, schem
 supabase/migrations/          # YYYYMMDDHHMMSS_*.sql
 ```
  
-Camadas do backend: `routes -> controllers -> services -> lib`. O controller nunca contém regra de negócio; o service nunca conhece `req`/`res`. O layout do app (menu + topbar + drawer) é o `MainLayout` no client.
+Camadas do backend: `routes -> controllers -> services -> lib`. O controller nunca contém regra de negócio; o service nunca conhece `req`/`res`. O layout do app é o `MainLayout` no client, composto de `components/layout/` (Sidebar, Topbar, MobileNav).
  
 ## Interface e design
 
 - **Cor é intocável sem pedido explícito.** `client/src/styles/tokens.css` é a fonte da verdade:
   acento dourado único, creme/escuro, paleta `--chart-*` validada para CVD. Não introduzir hue novo.
+  O escuro é o **"Grafite Apple"**: canvas `#000`, cartões em degraus `--elevated` `#1c1c1e` /
+  `--elevated-2` `#2c2c2e`, sem glow. Texto sobre dourado usa `text-on-gold` (escuro no tema
+  escuro) — nunca `text-white`, que dava ~2:1 sobre o dourado claro.
 - **Duas fontes, papéis separados:** `--font-sans` (Inter) em toda a UI e `--font-display`
   (Archivo) só em título — landing, login e o `<h2>` de cada tela. Não trocar a de corpo.
 - **Nunca inventar prova social.** Sem depoimento, contagem de usuários, logo de parceiro ou nota

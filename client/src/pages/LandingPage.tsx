@@ -1,4 +1,5 @@
-import { ArrowRight, Clock, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Clock, Lock, Menu, ShieldCheck, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { BentoGrid } from '../components/landing/BentoGrid';
 import { HeroProductPanel } from '../components/landing/HeroProductPanel';
@@ -35,37 +36,121 @@ const TICKERS = [
   { symbol: 'IBOV', change: '+0,58%', up: true },
 ];
 
+/** Âncoras das seções — header (desktop), menu mobile e rodapé usam a mesma lista. */
+const SECTION_LINKS = [
+  { href: '#como-funciona', label: 'Como funciona' },
+  { href: '#recursos', label: 'Recursos' },
+  { href: '#planos', label: 'Planos' },
+  { href: '#faq', label: 'Dúvidas' },
+];
+
+function LandingHeader() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
+        <a href="#topo" className="flex items-center gap-2">
+          <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-on-gold">
+            A
+          </span>
+          <span className="font-display text-lg font-bold tracking-tight">Aura Finance</span>
+        </a>
+
+        <nav aria-label="Seções" className="hidden items-center gap-1 lg:flex">
+          {SECTION_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="rounded-full px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            to="/login"
+            className="hidden rounded-full px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink sm:block"
+          >
+            Entrar
+          </Link>
+          <Link
+            to="/login?modo=cadastro"
+            className="hidden rounded-full bg-gold px-4 py-2 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong sm:block"
+          >
+            Criar conta
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((current) => !current)}
+            aria-expanded={open}
+            aria-controls="menu-landing"
+            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+            className="grid size-10 place-items-center rounded-full border border-line bg-elevated text-ink-muted transition-colors hover:text-gold lg:hidden"
+          >
+            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <nav
+          id="menu-landing"
+          aria-label="Seções (menu)"
+          className="border-t border-line bg-canvas px-4 pt-2 pb-4 lg:hidden"
+        >
+          <ul className="flex flex-col">
+            {SECTION_LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-ink-muted transition-colors hover:bg-elevated hover:text-ink"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+            <Link
+              to="/login"
+              className="flex min-h-11 items-center justify-center rounded-full border border-line text-sm font-semibold"
+            >
+              Entrar
+            </Link>
+            <Link
+              to="/login?modo=cadastro"
+              className="flex min-h-11 items-center justify-center rounded-full bg-gold text-sm font-semibold text-on-gold"
+            >
+              Criar conta
+            </Link>
+          </div>
+        </nav>
+      )}
+    </header>
+  );
+}
+
 export function LandingPage() {
   const { session, configured } = useAuth();
   if (configured && session) return <Navigate to="/app" replace />;
 
   return (
-    <div className="relative">
-      <header className="sticky top-0 z-40 border-b border-line/70 bg-canvas/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <span className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-white">
-              A
-            </span>
-            <span className="font-display text-lg font-bold tracking-tight">Aura Finance</span>
-          </span>
-          <nav className="flex items-center gap-2" aria-label="Acesso">
-            <ThemeToggle />
-            <Link
-              to="/login"
-              className="rounded-full px-3 py-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-            >
-              Entrar
-            </Link>
-            <Link
-              to="/login"
-              className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
-            >
-              Criar conta
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div id="topo" className="relative">
+      <LandingHeader />
 
       {/* ---- Herói: copy à esquerda, produto à direita ---- */}
       <section className="relative overflow-hidden">
@@ -98,8 +183,8 @@ export function LandingPage() {
               style={{ ['--enter-step' as string]: 3 }}
             >
               <Link
-                to="/login"
-                className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gold-strong"
+                to="/login?modo=cadastro"
+                className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3.5 text-sm font-semibold text-on-gold shadow-sm transition-colors hover:bg-gold-strong"
               >
                 Criar conta grátis
                 <ArrowRight className="size-4" aria-hidden />
@@ -165,12 +250,12 @@ export function LandingPage() {
       <main className="mx-auto max-w-6xl space-y-24 px-4 py-20 md:px-6 md:py-28">
         <HowItWorks />
 
-        <section aria-labelledby="recursos" id="recursos" className="scroll-mt-20">
+        <section aria-labelledby="recursos">
           <div className="reveal">
             <p className="text-sm font-medium tracking-widest text-gold uppercase">Recursos</p>
             <h2
               id="recursos"
-              className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl"
+              className="mt-2 scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl"
             >
               Tudo o que você precisa, com o método à mostra
             </h2>
@@ -194,11 +279,21 @@ export function LandingPage() {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-xs text-ink-muted md:flex-row md:items-center md:justify-between md:px-6">
           <span className="flex items-center gap-2">
-            <span className="grid size-7 place-items-center rounded-lg bg-gold text-[11px] font-extrabold text-white">
+            <span className="grid size-7 place-items-center rounded-lg bg-gold text-[11px] font-extrabold text-on-gold">
               A
             </span>
             <span className="font-display font-bold text-ink">Aura Finance</span>
           </span>
+          <nav aria-label="Seções (rodapé)" className="flex flex-wrap gap-x-4 gap-y-2">
+            {SECTION_LINKS.map((link) => (
+              <a key={link.href} href={link.href} className="transition-colors hover:text-ink">
+                {link.label}
+              </a>
+            ))}
+            <Link to="/login" className="transition-colors hover:text-ink">
+              Entrar
+            </Link>
+          </nav>
           <p className="max-w-2xl">
             Conteúdo educativo — não é recomendação de investimento (enquadramento CVM: análise
             educativa, não consultoria). O Aura não executa ordens nem custodia recursos. Os números

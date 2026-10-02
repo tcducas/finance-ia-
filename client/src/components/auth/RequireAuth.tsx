@@ -21,7 +21,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => void reloadProfile()}
-          className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-white hover:bg-gold-strong"
+          className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-on-gold hover:bg-gold-strong"
         >
           Tentar de novo
         </button>

@@ -220,7 +220,7 @@ export function MercadoPage() {
                 aria-checked={market === m.id}
                 onClick={() => setMarket(m.id)}
                 className={`flex-1 rounded-full px-3 py-1 font-medium transition-colors ${
-                  market === m.id ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                  market === m.id ? 'bg-gold text-on-gold' : 'text-ink-muted hover:text-ink'
                 }`}
               >
                 {m.label}
@@ -239,7 +239,7 @@ export function MercadoPage() {
             <button
               type="submit"
               aria-label="Adicionar à watchlist"
-              className="flex items-center gap-1 rounded-xl bg-gold px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-gold-strong"
+              className="flex items-center gap-1 rounded-xl bg-gold px-3 py-2 text-sm font-semibold text-on-gold transition-colors hover:bg-gold-strong"
             >
               <Plus className="size-4" aria-hidden />
             </button>

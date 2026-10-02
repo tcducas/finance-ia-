@@ -35,7 +35,7 @@ export function HowItWorks() {
     <section aria-labelledby="como-funciona" className="reveal">
       <h2
         id="como-funciona"
-        className="font-display text-3xl font-bold tracking-tight md:text-4xl"
+        className="scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl"
       >
         Três passos, sem planilha
       </h2>
@@ -78,7 +78,7 @@ export function BoundarySection() {
   return (
     <section aria-labelledby="limite" className="reveal">
       <p className="text-sm font-medium tracking-widest text-gold uppercase">O limite é o produto</p>
-      <h2 id="limite" className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">
+      <h2 id="limite" className="mt-2 scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl">
         Direciona, não executa
       </h2>
       <p className="mt-3 max-w-2xl text-base text-ink-muted">
@@ -137,7 +137,7 @@ const NEVER_GOES = ['Nome e e-mail', 'CPF', 'Valor absoluto do patrimônio', 'Qu
 export function TrustSection() {
   return (
     <section aria-labelledby="confianca" className="reveal">
-      <h2 id="confianca" className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+      <h2 id="confianca" className="scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl">
         Seus dados, com fronteira declarada
       </h2>
 
@@ -219,7 +219,7 @@ export function TrustSection() {
 export function PlanCompare() {
   return (
     <section aria-labelledby="planos" className="reveal">
-      <h2 id="planos" className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+      <h2 id="planos" className="scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl">
         Comece no Free
       </h2>
       <p className="mt-3 max-w-2xl text-base text-ink-muted">
@@ -308,7 +308,7 @@ const QUESTIONS = [
 export function Faq() {
   return (
     <section aria-labelledby="faq" className="reveal">
-      <h2 id="faq" className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+      <h2 id="faq" className="scroll-mt-24 font-display text-3xl font-bold tracking-tight md:text-4xl">
         Perguntas diretas
       </h2>
       <div className="mt-8 divide-y divide-line overflow-hidden rounded-3xl border border-line bg-elevated">
@@ -343,8 +343,8 @@ export function FinalCta() {
         tomarem forma na mesma sessão.
       </p>
       <Link
-        to="/login"
-        className="mt-7 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-gold-strong"
+        to="/login?modo=cadastro"
+        className="mt-7 inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-on-gold shadow-sm transition-colors hover:bg-gold-strong"
       >
         Criar conta grátis
       </Link>
