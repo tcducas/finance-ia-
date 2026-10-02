@@ -59,10 +59,11 @@ where email = 'SEU_EMAIL_AQUI';
 
 5. Recarregue o app. O item **Admin** aparece no rodapé do menu.
 
-## 5. IA (opcional agora)
+## 5. IA 
 
 - `GEMINI_API_KEY` — https://aistudio.google.com/apikey → chat e explicações do copiloto.
-- `ANTHROPIC_API_KEY` — análise de carteira e direcionamento de aporte via Claude.
+-  `GROQ_API_KEY` —  https://console.groq.com/keys
+
 
 Sem chave, as rotas de IA respondem 503 e a UI mostra o estado desabilitado; o resto do app funciona.
 

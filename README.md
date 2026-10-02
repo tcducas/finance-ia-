@@ -56,9 +56,7 @@ supabase/migrations/   # YYYYMMDDHHMMSS_*.sql
 - [x] **1.11 — Dashboard enriquecido**: cards da home ligados às fontes reais — receitas/despesas/saldo, fixos×variáveis, orçamento usado (%), patrimônio líquido e aporte do mês (clique abre o consultor do copiloto). Loading/erro/vazio tratados; zero mock nos números.
 - [x] **1.12 — Autenticação + onboarding + landing + admin**: migrations greenfield `profiles` (flag `is_admin`, `onboarded_at`, trigger `handle_new_user`) e `investor_profiles` (RLS own). Backend: `/api/me`, `/api/onboarding` (perfil de risco por regra pura em `riskScore.ts`), `requireAdmin` + `/api/admin/stats`. Client: landing pública em `/`, `/login` (Supabase Auth), quiz de perfil em `/onboarding`, app sob `/app/*` atrás de `RequireAuth`; `AuthContext` sincroniza o access_token com o provider HTTP — **login tira o app do modo demo automaticamente**. Perfil e Admin deixam de ser stub; ativação guiada na home.
 
-## Ativando os serviços reais (quando quiser)
-
-Sem `VITE_SUPABASE_*` o app roda em **modo demonstração** (dados no localStorage, selo "demo" na topbar). Para ligar cada serviço, preencha o `.env` (copie de `.env.example`):
+ 
 
 1. **IA** — `GEMINI_API_KEY` (chat) e `GROQ_API_KEY` (análise). Basta preencher e reiniciar: o copiloto sai do modo demo sozinho.
 2. **Mercado** — `BRAPI_TOKEN` (brapi.dev, plano gratuito) para cotações reais; sem ele, os movers do dia já funcionam e o resto usa dados de exemplo rotulados.
