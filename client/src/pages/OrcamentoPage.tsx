@@ -6,6 +6,7 @@ import { SpendingAnalysis } from '../components/budget/SpendingAnalysis';
 import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useFinance } from '../context/FinanceContext';
+import { Skeleton } from '../components/ui/Skeleton';
 
 /**
  * Tela: Gastos — rota `/app/gastos`
@@ -19,10 +20,10 @@ export function OrcamentoPage() {
   const spentByCategory = new Map(spending.map((s) => [s.category, s.total]));
 
   return (
-    <section aria-labelledby="gastos-titulo" className="mx-auto max-w-5xl space-y-6">
+    <section aria-labelledby="gastos-titulo" className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="gastos-titulo" className="text-2xl font-bold tracking-tight">
+          <h2 id="gastos-titulo" className="font-display text-2xl font-bold tracking-tight">
             Gastos
           </h2>
           <p className="text-sm text-ink-muted">
@@ -46,11 +47,7 @@ export function OrcamentoPage() {
           Orçamento do mês
         </h3>
         {loading ? (
-          <div className="space-y-2">
-            {[0, 1].map((i) => (
-              <div key={i} className="h-20 animate-pulse rounded-2xl bg-line/60" />
-            ))}
-          </div>
+          <Skeleton className="h-20" rows={2} />
         ) : budgets.length === 0 ? (
           <EmptyState
             icon={ChartPie}

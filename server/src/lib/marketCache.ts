@@ -53,3 +53,7 @@ export const marketCache = new MarketCache();
 // longo. O dedupe de promessa em voo é essencial aqui: exchangeInfo/available
 // são chamadas caras; N requisições concorrentes no boot geram só UMA.
 export const catalogCache = new MarketCache(12 * 60 * 60 * 1000);
+
+// Livro de ofertas e negócios recentes mudam a cada segundo: cache de 5s só para
+// não virar amplificador de tráfego quando vários usuários olham o mesmo par.
+export const boardCache = new MarketCache(5_000);

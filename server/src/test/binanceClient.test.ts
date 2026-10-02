@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppError } from '../errors/AppError.js';
-import { exchangeInfo, klines, roundStep, tickers24h } from '../lib/binanceClient.js';
+import {
+  depth,
+  exchangeInfo,
+  klines,
+  recentTrades,
+  roundStep,
+  tickers24h,
+} from '../lib/binanceClient.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -82,7 +89,7 @@ describe('tickers24h / klines', () => {
     expect(t).toMatchObject({ symbol: 'ETHUSDT', lastPrice: 3000.5, priceChangePercent: 0.35 });
   });
 
-  it('extrai o close (índice 4) de cada candle', async () => {
+  it('extrai o OHLCV completo de cada candle', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
@@ -90,7 +97,57 @@ describe('tickers24h / klines', () => {
       ),
     );
     const candles = await klines('BTCUSDT', '1d', 1);
-    expect(candles).toEqual([{ openTime: 1000, close: 1.5 }]);
+    expect(candles).toEqual([
+      { openTime: 1000, open: 1, high: 2, low: 0.5, close: 1.5, volume: 99 },
+    ]);
+  });
+});
+
+describe('depth', () => {
+  it('converte bids/asks de string para number', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            lastUpdateId: 42,
+            bids: [['100.5', '2']],
+            asks: [['101.5', '3']],
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+    const book = await depth('BTCBRL', 20);
+    expect(book).toEqual({
+      lastUpdateId: 42,
+      bids: [{ price: 100.5, qty: 2 }],
+      asks: [{ price: 101.5, qty: 3 }],
+    });
+  });
+
+  it('aceita resposta sem bids/asks sem estourar', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({}), { status: 200 })));
+    const book = await depth('BTCBRL', 20);
+    expect(book).toEqual({ lastUpdateId: 0, bids: [], asks: [] });
+  });
+});
+
+describe('recentTrades', () => {
+  it('converte preço/quantidade e preserva isBuyerMaker', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([{ id: 7, price: '99.5', qty: '0.25', time: 1000, isBuyerMaker: true }]),
+          { status: 200 },
+        ),
+      ),
+    );
+    const trades = await recentTrades('BTCBRL', 25);
+    expect(trades).toEqual([
+      { id: 7, price: 99.5, qty: 0.25, time: 1000, isBuyerMaker: true },
+    ]);
   });
 });
 

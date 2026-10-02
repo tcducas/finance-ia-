@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useCopilot } from '../context/CopilotContext';
-import { formatCurrency } from '../lib/format';
+import { formatMoney } from '../lib/format';
 import { addWatchlist, fetchAsset } from '../services/market';
 import type { AssetDetail } from '../types/market';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const RANGES = [
   { id: '1mo', label: '1M' },
@@ -54,7 +55,7 @@ export function AtivoDetalhePage() {
   const positive = (asset?.changePercent ?? 0) >= 0;
 
   return (
-    <section aria-labelledby="ativo-titulo" className="mx-auto max-w-5xl space-y-6">
+    <section aria-labelledby="ativo-titulo" className="mx-auto max-w-6xl space-y-6">
       <Link
         to="/app/investimentos"
         className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-gold"
@@ -71,17 +72,19 @@ export function AtivoDetalhePage() {
       )}
 
       {loading || !asset ? (
-        <div className="h-64 animate-pulse rounded-2xl bg-line/60" />
+        <Skeleton className="h-64" />
       ) : (
         <>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 id="ativo-titulo" className="text-2xl font-bold tracking-tight">
+              <h2 id="ativo-titulo" className="font-display text-2xl font-bold tracking-tight">
                 {asset.ticker}
               </h2>
               <p className="text-sm text-ink-muted">{asset.name}</p>
               <div className="mt-2 flex items-baseline gap-3">
-                <p className="text-3xl font-bold tabular-nums">{formatCurrency(asset.price)}</p>
+                <p className="text-3xl font-bold tabular-nums">
+                  {formatMoney(asset.price, asset.currency)}
+                </p>
                 <span
                   className="text-base font-semibold tabular-nums"
                   style={{ color: positive ? 'var(--status-good)' : 'var(--status-bad)' }}
@@ -92,7 +95,7 @@ export function AtivoDetalhePage() {
               </div>
               <p className="mt-1 flex items-center gap-1 text-xs text-ink-muted">
                 <Clock className="size-3" aria-hidden />
-                Cotação com atraso (~15 min)
+                {asset.delayed ? 'Cotação com atraso (~15 min)' : 'Cotação em tempo real'}
               </p>
             </div>
 
@@ -178,7 +181,9 @@ export function AtivoDetalhePage() {
                         return (
                           <div className="rounded-xl border border-line bg-elevated px-3 py-2 text-xs shadow-lg">
                             <p className="font-medium">{String(label)}</p>
-                            <p className="text-ink-muted tabular-nums">{formatCurrency(value)}</p>
+                            <p className="text-ink-muted tabular-nums">
+                              {formatMoney(value, asset.currency)}
+                            </p>
                           </div>
                         );
                       }}
@@ -200,11 +205,11 @@ export function AtivoDetalhePage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Indicator
               label="Mín 52 sem"
-              value={asset.low52w !== null ? formatCurrency(asset.low52w) : '—'}
+              value={asset.low52w !== null ? formatMoney(asset.low52w, asset.currency) : '—'}
             />
             <Indicator
               label="Máx 52 sem"
-              value={asset.high52w !== null ? formatCurrency(asset.high52w) : '—'}
+              value={asset.high52w !== null ? formatMoney(asset.high52w, asset.currency) : '—'}
             />
             <Indicator
               label="P/L"
@@ -213,7 +218,9 @@ export function AtivoDetalhePage() {
             <Indicator
               label="LPA"
               value={
-                asset.earningsPerShare !== null ? formatCurrency(asset.earningsPerShare) : '—'
+                asset.earningsPerShare !== null
+                  ? formatMoney(asset.earningsPerShare, asset.currency)
+                  : '—'
               }
             />
             <Indicator

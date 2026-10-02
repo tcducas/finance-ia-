@@ -1,7 +1,15 @@
 import { AppError } from '../../errors/AppError.js';
 import * as binance from '../../lib/binanceClient.js';
 import { catalogCache, marketCache } from '../../lib/marketCache.js';
-import type { AssetRef, MarketAdapter, Quote } from './types.js';
+import { boardCache } from '../../lib/marketCache.js';
+import type {
+  AssetRef,
+  BoardTrade,
+  MarketAdapter,
+  OhlcCandle,
+  OrderBookSnapshot,
+  Quote,
+} from './types.js';
 
 /**
  * Cripto via Binance — somente leitura, endpoints públicos, sem API key.
@@ -27,6 +35,11 @@ function sanitizeSymbols(tickers: string[]): string[] {
 function sanitizeOne(ticker: string): string {
   const [clean] = sanitizeSymbols([ticker]);
   return clean ?? ticker.trim().toUpperCase();
+}
+
+/** Quote asset do par: BTCBRL -> BRL, BTCUSDT -> USDT. */
+function quoteAsset(symbol: string): string {
+  return QUOTE_ASSETS.find((q) => symbol.endsWith(q)) ?? 'USDT';
 }
 
 function splitSymbol(symbol: string): string {
@@ -57,10 +70,13 @@ function toQuote(t: binance.Ticker24h, name?: string): Quote {
     ticker: t.symbol,
     market: 'CRYPTO',
     name: name ?? splitSymbol(t.symbol),
+    currency: quoteAsset(t.symbol),
     price: t.lastPrice,
     change: t.priceChange,
     changePercent: t.priceChangePercent,
     volume: t.volume,
+    dayHigh: t.highPrice,
+    dayLow: t.lowPrice,
     high52w: null,
     low52w: null,
     marketCap: null,
@@ -80,8 +96,96 @@ const RANGE_TO_KLINES: Record<string, { interval: string; limit: number }> = {
   '1y': { interval: '1d', limit: 365 },
 };
 
+/** Acumula quantidade e calcula a fração de profundidade de cada nível. */
+function toDepth(levels: binance.DepthLevel[]) {
+  const total = levels.reduce((sum, l) => sum + l.qty, 0);
+  let cumulative = 0;
+  const out = levels.map((l) => {
+    cumulative += l.qty;
+    return {
+      price: l.price,
+      qty: l.qty,
+      cumulative: Math.round(cumulative * 1e8) / 1e8,
+      depthRatio: total > 0 ? cumulative / total : 0,
+    };
+  });
+  return { levels: out, total };
+}
+
+const BOARD_KLINES: Record<string, { interval: string; limit: number }> = {
+  '15m': { interval: '15m', limit: 120 },
+  '1h': { interval: '1h', limit: 120 },
+  '4h': { interval: '4h', limit: 120 },
+  '1d': { interval: '1d', limit: 120 },
+};
+
 export const cryptoAdapter: MarketAdapter = {
   id: 'CRYPTO',
+
+  // Único mercado com livro e tape: a Binance pública entrega os dois sem chave.
+  board: { intervals: ['15m', '1h', '4h', '1d'], book: true, trades: true },
+
+  async ohlc(ticker, interval): Promise<OhlcCandle[]> {
+    const clean = sanitizeOne(ticker);
+    const cfg = BOARD_KLINES[interval] ?? BOARD_KLINES['1h'];
+    return marketCache.getOrFetch(`ohlc:CRYPTO:${clean}:${interval}`, async () => {
+      const candles = await binance.klines(clean, cfg?.interval ?? '1h', cfg?.limit ?? 120);
+      return candles.map((k) => ({
+        time: new Date(k.openTime).toISOString(),
+        open: k.open,
+        high: k.high,
+        low: k.low,
+        close: k.close,
+        volume: k.volume,
+      }));
+    });
+  },
+
+  async orderBook(ticker): Promise<OrderBookSnapshot> {
+    const clean = sanitizeOne(ticker);
+    return boardCache.getOrFetch(`book:CRYPTO:${clean}`, async () => {
+      const raw = await binance.depth(clean, 20);
+      const bids = toDepth(raw.bids);
+      const asks = toDepth(raw.asks);
+      const bestBid = raw.bids[0]?.price ?? 0;
+      const bestAsk = raw.asks[0]?.price ?? 0;
+      const spread = bestAsk > 0 && bestBid > 0 ? bestAsk - bestBid : 0;
+      const liquidity = bids.total + asks.total;
+      return {
+        bids: bids.levels,
+        asks: asks.levels,
+        spread: Math.round(spread * 1e8) / 1e8,
+        spreadPercent: bestAsk > 0 ? Math.round((spread / bestAsk) * 1e6) / 1e4 : 0,
+        buyPressure: liquidity > 0 ? Math.round((bids.total / liquidity) * 1000) / 1000 : 0,
+      };
+    });
+  },
+
+  async tape(ticker): Promise<BoardTrade[]> {
+    const clean = sanitizeOne(ticker);
+    return boardCache.getOrFetch(`tape:CRYPTO:${clean}`, async () => {
+      const trades = await binance.recentTrades(clean, 25);
+      return trades
+        .map((t) => ({
+          id: t.id,
+          price: t.price,
+          qty: t.qty,
+          time: new Date(t.time).toISOString(),
+          // isBuyerMaker true = o comprador estava no livro, a agressão foi de venda.
+          side: (t.isBuyerMaker ? 'venda' : 'compra') as BoardTrade['side'],
+        }))
+        .reverse();
+    });
+  },
+
+  async steps(ticker) {
+    const clean = sanitizeOne(ticker);
+    return marketCache.getOrFetch(`steps:CRYPTO:${clean}`, async () => {
+      const info = await binance.exchangeInfo();
+      const meta = info.get(clean);
+      return { tickSize: meta?.tickSize ?? 0, stepSize: meta?.stepSize ?? 0 };
+    });
+  },
 
   available() {
     return true;

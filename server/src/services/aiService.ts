@@ -4,10 +4,12 @@ import {
   sanitizeUserText,
   type RawFinancialContext,
 } from '../ai/anonymize.js';
-import { DISCLAIMER } from '../ai/prompts.js';
+import { DISCLAIMER, screenGuide } from '../ai/prompts.js';
 import type { ChatTurn } from '../ai/providers/gemini.js';
-import type { PortfolioAnalysis } from '../ai/providers/claude.js';
-import { env } from '../env.js';
+import type { PortfolioAnalysis } from '../ai/analysisSchema.js';
+import type { PortfolioReview } from '../ai/portfolioReviewSchema.js';
+import type { Panorama } from './portfolioService.js';
+import { ANALYZE_KEY, env } from '../env.js';
 import { AppError } from '../errors/AppError.js';
 import { fromPostgrest } from '../errors/postgrest.js';
 import type { UserClient } from '../lib/supabase.js';
@@ -92,7 +94,11 @@ export async function chat(params: ChatParams): Promise<ChatResult> {
   // Contexto anonimizado da tela vai junto da mensagem (modelos são stateless).
   const screenContext = params.db ? await buildAnonymizedContext(params.db, params.screen) : {};
   const contextLine = `[contexto anonimizado da tela: ${JSON.stringify(screenContext)}]`;
-  const reply = await aiRouter.chat(history, `${contextLine}\n\n${message}`);
+  // O guia da tela dá ao modelo o vocabulário do que o usuário está vendo —
+  // sem ele, uma pergunta como "o que é esse livro?" vira resposta genérica.
+  const guide = screenGuide(params.screen);
+  const guideLine = guide ? `[guia da tela]\n${guide}\n\n` : '';
+  const reply = await aiRouter.chat(history, `${contextLine}\n\n${guideLine}${message}`);
 
   if (useDb && params.db && conversationId) {
     const { error } = await params.db.from('ai_messages').insert([
@@ -115,9 +121,10 @@ export interface AnalyzeParams {
 }
 
 export async function analyze(params: AnalyzeParams): Promise<PortfolioAnalysis> {
-  if (!env.ANTHROPIC_API_KEY) {
+  // Falha cedo, antes de montar contexto e buscar mercado.
+  if (!env[ANALYZE_KEY]) {
     throw new AppError(
-      'IA não configurada no servidor (ANTHROPIC_API_KEY ausente).',
+      `IA não configurada no servidor (${ANALYZE_KEY} ausente).`,
       'AI_NOT_CONFIGURED',
       503,
     );
@@ -203,4 +210,86 @@ export function aporteBand(value: number): string {
   if (value < 5_000) return 'R$ 1 mil – R$ 5 mil';
   if (value < 20_000) return 'R$ 5 mil – R$ 20 mil';
   return 'acima de R$ 20 mil';
+}
+
+export interface ReviewParams {
+  panorama: Panorama;
+  /** O que o usuário quer resolver, nas palavras dele. */
+  objetivo: string;
+}
+
+/**
+ * Avaliação da carteira importada.
+ *
+ * CONTRATO DE ANONIMIZAÇÃO: ao prompt vão tickers, classes, percentuais, as
+ * métricas calculadas e FAIXA de patrimônio. NÃO vai o valor absoluto da
+ * carteira, nem nome, e-mail ou qualquer identificador — por isso montamos o
+ * payload campo a campo em vez de serializar o panorama inteiro.
+ */
+export async function reviewPortfolio(params: ReviewParams): Promise<PortfolioReview> {
+  if (!env[ANALYZE_KEY]) {
+    throw new AppError(
+      `IA não configurada no servidor (${ANALYZE_KEY} ausente).`,
+      'AI_NOT_CONFIGURED',
+      503,
+    );
+  }
+
+  const p = params.panorama;
+  const payload = {
+    perfil: p.profile,
+    faixa_de_carteira: aporteBand(p.currentValue),
+    rentabilidade: {
+      retorno_total_pct: p.profitPercent,
+      tir_anual_pct: p.irr === null ? null : Math.round(p.irr * 1000) / 10,
+      vpl_sinal: p.npv === 0 ? 'indisponivel' : p.npv > 0 ? 'positivo' : 'negativo',
+      taxa_de_atratividade_pct: Math.round(p.attractivenessRate * 1000) / 10,
+      payback_meses: p.paybackMonths,
+      proventos_sobre_carteira_pct:
+        p.currentValue > 0 ? Math.round((p.totalDividends / p.currentValue) * 1000) / 10 : null,
+    },
+    risco: {
+      hhi: p.hhi,
+      posicoes_efetivas: p.effectivePositions,
+      concentracao: p.concentration,
+      volatilidade_anual_pct:
+        p.portfolioVolatility === null ? null : Math.round(p.portfolioVolatility * 1000) / 10,
+      observacao_volatilidade: 'ponderada pelo peso, ignora correlação entre ativos',
+    },
+    liquidez: contarPor(p.positions.map((pos) => pos.liquidity)),
+    alinhamento: {
+      score: p.alignmentScore,
+      maiores_desvios: p.gaps
+        .slice(0, 4)
+        .map((g) => ({ classe: g.assetClass, atual_pct: g.actual, alvo_pct: g.target })),
+    },
+    alocacao_atual_pct: p.allocation,
+    posicoes: p.positions.map((pos) => ({
+      ticker: pos.ticker,
+      classe: pos.assetClass,
+      peso_pct: pos.weight,
+      retorno_pct: pos.profitPercent,
+      meses_em_carteira: pos.monthsHeld,
+      liquidez: pos.liquidity,
+      volatilidade_anual_pct:
+        pos.volatility === null ? null : Math.round(pos.volatility * 1000) / 10,
+    })),
+    dados_faltando: {
+      posicoes_sem_cotacao: p.stalePositions,
+      posicoes_sem_data_de_aporte: p.positions.filter((pos) => pos.monthsHeld === null).length,
+    },
+  };
+
+  const content = [
+    `Panorama calculado da carteira: ${JSON.stringify(payload)}`,
+    `Objetivo declarado pelo usuário: "${sanitizeUserText(params.objetivo)}"`,
+  ].join('\n');
+
+  return aiRouter.reviewPortfolio(content);
+}
+
+function contarPor(values: string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const value of values) out[value] = (out[value] ?? 0) + 1;
+  return out;
 }

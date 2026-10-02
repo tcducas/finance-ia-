@@ -5,3 +5,4 @@ export const aiRouter = Router();
 
 aiRouter.post('/chat', controller.chat);
 aiRouter.post('/analyze', controller.analyze);
+aiRouter.post('/portfolio', controller.reviewPortfolio);

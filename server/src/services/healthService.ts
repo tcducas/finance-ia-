@@ -1,4 +1,4 @@
-import { env } from '../env.js';
+import { ANALYZE_KEY, env } from '../env.js';
 
 export type DependencyStatus = 'up' | 'down' | 'not_configured';
 
@@ -33,8 +33,8 @@ async function checkMarket(): Promise<DependencyStatus> {
 }
 
 function checkAi(): DependencyStatus {
-  const configured = env.AI_PROVIDER === 'gemini' ? env.GEMINI_API_KEY : env.ANTHROPIC_API_KEY;
-  return configured ? 'up' : 'not_configured';
+  // Chat (Gemini) e análise (ANALYZE_PROVIDER) precisam estar configurados.
+  return env.GEMINI_API_KEY && env[ANALYZE_KEY] ? 'up' : 'not_configured';
 }
 
 // Memoizado 10s: um endpoint público de readiness não pode virar amplificador

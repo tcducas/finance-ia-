@@ -18,6 +18,8 @@ export type Database = {
           email: string | null;
           full_name: string | null;
           is_admin: boolean;
+          plan: 'free' | 'pro';
+          plan_updated_at: string | null;
           onboarded_at: string | null;
           created_at: string;
         };
@@ -26,6 +28,8 @@ export type Database = {
           email?: string | null;
           full_name?: string | null;
           is_admin?: boolean;
+          plan?: 'free' | 'pro';
+          plan_updated_at?: string | null;
           onboarded_at?: string | null;
           created_at?: string;
         };
@@ -34,6 +38,8 @@ export type Database = {
           email?: string | null;
           full_name?: string | null;
           is_admin?: boolean;
+          plan?: 'free' | 'pro';
+          plan_updated_at?: string | null;
           onboarded_at?: string | null;
           created_at?: string;
         };
@@ -191,6 +197,138 @@ export type Database = {
           conversation_id?: string;
           role?: 'user' | 'assistant';
           content?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      goals: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          kind: 'reserva' | 'compra' | 'aposentadoria' | 'geral';
+          target_amount: number;
+          current_amount: number;
+          monthly_contribution: number;
+          annual_rate: number;
+          target_date: string | null;
+          priority: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          kind?: 'reserva' | 'compra' | 'aposentadoria' | 'geral';
+          target_amount: number;
+          current_amount?: number;
+          monthly_contribution?: number;
+          annual_rate?: number;
+          target_date?: string | null;
+          priority?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          kind?: 'reserva' | 'compra' | 'aposentadoria' | 'geral';
+          target_amount?: number;
+          current_amount?: number;
+          monthly_contribution?: number;
+          annual_rate?: number;
+          target_date?: string | null;
+          priority?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      patrimonio_snapshots: {
+        Row: {
+          id: string;
+          user_id: string;
+          month: string;
+          asset_class: string;
+          value: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          month: string;
+          asset_class?: string;
+          value: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          month?: string;
+          asset_class?: string;
+          value?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_usage: {
+        Row: {
+          user_id: string;
+          period: string;
+          kind: 'chat' | 'analyze';
+          count: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          period: string;
+          kind: 'chat' | 'analyze';
+          count?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          period?: string;
+          kind?: 'chat' | 'analyze';
+          count?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      holdings: {
+        Row: {
+          id: string;
+          user_id: string;
+          ticker: string;
+          market: 'BR' | 'CRYPTO' | 'US';
+          asset_class: string;
+          quantity: number;
+          avg_price: number;
+          acquired_on: string | null;
+          dividends_received: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          ticker: string;
+          market?: 'BR' | 'CRYPTO' | 'US';
+          asset_class?: string;
+          quantity: number;
+          avg_price: number;
+          acquired_on?: string | null;
+          dividends_received?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          ticker?: string;
+          market?: 'BR' | 'CRYPTO' | 'US';
+          asset_class?: string;
+          quantity?: number;
+          avg_price?: number;
+          acquired_on?: string | null;
+          dividends_received?: number;
           created_at?: string;
         };
         Relationships: [];

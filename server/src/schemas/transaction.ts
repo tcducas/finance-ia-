@@ -23,3 +23,9 @@ export const periodQuerySchema = z.object({ month: monthSchema.optional() });
 
 export type TransactionCreateInput = z.infer<typeof transactionCreateSchema>;
 export type TransactionUpdateInput = z.infer<typeof transactionUpdateSchema>;
+
+/** Janela do gráfico de evolução: 3 a 60 meses (default 12). */
+export const evolutionQuerySchema = z.object({
+  month: monthSchema.optional(),
+  months: z.coerce.number().int().min(3).max(60).default(12),
+});

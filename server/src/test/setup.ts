@@ -9,3 +9,4 @@ process.env.SUPABASE_ANON_KEY = 'anon-de-teste';
 // não configuradas — as rotas de IA seguem devolvendo 503 nos testes.
 process.env.GEMINI_API_KEY = '';
 process.env.ANTHROPIC_API_KEY = '';
+process.env.GROQ_API_KEY = '';

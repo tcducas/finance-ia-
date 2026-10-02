@@ -1,7 +1,7 @@
 import { env } from '../../env.js';
 import { AppError } from '../../errors/AppError.js';
 import { catalogCache, marketCache } from '../../lib/marketCache.js';
-import type { AssetRef, MarketAdapter, Quote } from './types.js';
+import type { AssetRef, MarketAdapter, OhlcCandle, Quote } from './types.js';
 
 /**
  * Ações e FIIs brasileiros via brapi.dev (plano gratuito). A chave nunca sai
@@ -18,6 +18,8 @@ interface BrapiQuoteResult {
   regularMarketChange?: number;
   regularMarketChangePercent?: number;
   regularMarketVolume?: number;
+  regularMarketDayHigh?: number;
+  regularMarketDayLow?: number;
   fiftyTwoWeekHigh?: number;
   fiftyTwoWeekLow?: number;
   marketCap?: number;
@@ -25,7 +27,14 @@ interface BrapiQuoteResult {
   earningsPerShare?: number;
   logourl?: string;
   regularMarketTime?: string;
-  historicalDataPrice?: Array<{ date: number; close: number | null }>;
+  historicalDataPrice?: Array<{
+    date: number;
+    open?: number | null;
+    high?: number | null;
+    low?: number | null;
+    close: number | null;
+    volume?: number | null;
+  }>;
 }
 
 async function brapiGet(path: string): Promise<unknown> {
@@ -49,10 +58,13 @@ function toQuote(r: BrapiQuoteResult): Quote {
     ticker: r.symbol,
     market: 'BR',
     name: r.longName ?? r.shortName ?? r.symbol,
+    currency: 'BRL',
     price: r.regularMarketPrice ?? 0,
     change: r.regularMarketChange ?? 0,
     changePercent: r.regularMarketChangePercent ?? 0,
     volume: r.regularMarketVolume ?? null,
+    dayHigh: r.regularMarketDayHigh ?? null,
+    dayLow: r.regularMarketDayLow ?? null,
     high52w: r.fiftyTwoWeekHigh ?? null,
     low52w: r.fiftyTwoWeekLow ?? null,
     marketCap: r.marketCap ?? null,
@@ -96,8 +108,43 @@ async function loadCatalog(): Promise<Map<string, AssetRef>> {
   });
 }
 
+/**
+ * Intervalos do board de ações. O plano gratuito da brapi só entrega candle
+ * diário — intraday é pago. Declaramos só o que existe de graça, e a UI mostra
+ * apenas esses botões em vez de oferecer um período que volta vazio.
+ */
+const BOARD_RANGE: Record<string, string> = { '1d': '3mo', '1wk': '1y', '1mo': '1y' };
+
 export const brapiAdapter: MarketAdapter = {
   id: 'BR',
+
+  // Sem livro de ofertas nem tape: a brapi não expõe book da B3 no free.
+  board: { intervals: ['1d', '1wk', '1mo'], book: false, trades: false },
+
+  async ohlc(ticker, interval): Promise<OhlcCandle[]> {
+    const [clean] = sanitizeTickers([ticker]);
+    const safeInterval = BOARD_RANGE[interval] ? interval : '1d';
+    const range = BOARD_RANGE[safeInterval] ?? '3mo';
+    return marketCache.getOrFetch(`ohlc:BR:${clean}:${safeInterval}`, async () => {
+      const body = (await brapiGet(
+        `/quote/${clean}?range=${range}&interval=${safeInterval}`,
+      )) as { results?: BrapiQuoteResult[] };
+      const rows = body.results?.[0]?.historicalDataPrice ?? [];
+      return rows
+        .filter((p) => p.close !== null)
+        .map((p) => {
+          const close = p.close as number;
+          return {
+            time: new Date(p.date * 1000).toISOString(),
+            open: p.open ?? close,
+            high: p.high ?? close,
+            low: p.low ?? close,
+            close,
+            volume: p.volume ?? null,
+          };
+        });
+    });
+  },
 
   available() {
     return true;
@@ -186,10 +233,13 @@ export async function getMovers() {
       ticker: s.stock,
       market: 'BR',
       name: s.name,
+      currency: 'BRL',
       price: s.close,
       change: 0,
       changePercent: s.change,
       volume: s.volume ?? null,
+      dayHigh: null,
+      dayLow: null,
       high52w: null,
       low52w: null,
       marketCap: null,

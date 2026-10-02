@@ -72,6 +72,8 @@
   --color-gold-strong: var(--gold-strong);
   --color-line: var(--line);
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Display só em títulos; a UI inteira segue em Inter. */
+  --font-display: 'Archivo', var(--font-sans);
 }
 
 html,
@@ -134,5 +136,144 @@ body::before {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Camada de apresentação (landing e login)
+ *
+ * Nenhum token de cor novo: tudo abaixo reaproveita --gold, --line e a paleta
+ * --chart-*. O que muda é intensidade e movimento.
+ * ------------------------------------------------------------------------ */
+
+/* Aurora: o glow dourado que já existe no body, mais presente e em deriva lenta.
+   Vive num elemento próprio para não competir com o grid do fundo global. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora::before,
+.aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+}
+
+.aurora::before {
+  width: 45rem;
+  height: 28rem;
+  top: -14rem;
+  right: -8rem;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--gold) 38%, transparent),
+    transparent
+  );
+  animation: aurora-drift 24s ease-in-out infinite alternate;
+}
+
+.aurora::after {
+  width: 32rem;
+  height: 22rem;
+  top: 6rem;
+  left: -10rem;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--chart-2) 16%, transparent),
+    transparent
+  );
+  animation: aurora-drift 32s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-4rem, 2rem, 0) scale(1.15);
+  }
+}
+
+/* Reveal no scroll. A regra-base deixa o elemento VISÍVEL: a animação só entra
+   onde o navegador suporta scroll-driven animations, então a página nunca
+   depende de JS nem fica presa em opacity 0. */
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Entrada do herói: stagger por índice, sem esperar scroll. */
+.enter {
+  animation: reveal-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--enter-step, 0) * 90ms);
+}
+
+/* Bento: profundidade sutil por dentro do bloco — é o que faz parecer app, e
+   não site (padrão Family, do banco de referências). */
+.bento-cell {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--ink) 3%, transparent),
+    transparent 60%
+  );
+}
+
+.bento-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--elevated) 70%, transparent);
+}
+
+/* Faixa de rolagem infinita dos tickers. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before,
+  .aurora::after,
+  .marquee-track {
+    animation: none;
   }
 }

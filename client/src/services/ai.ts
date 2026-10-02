@@ -5,6 +5,15 @@ import { categoryLabel } from '../lib/categories';
 export const DISCLAIMER =
   'Conteúdo educativo — não é recomendação de investimento. Quem decide e executa é você, na sua corretora.';
 
+export interface AiQuota {
+  kind: 'chat' | 'analyze';
+  used: number;
+  /** null = ilimitado (plano pro). */
+  limit: number | null;
+  remaining: number | null;
+  exceeded: boolean;
+}
+
 export interface ChatTurn {
   role: 'user' | 'assistant';
   content: string;
@@ -49,27 +58,35 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return json.data;
 }
 
+/** Mensagem de erro para a UI — logado, IA sem chave aparece como erro, nunca vira demo. */
+export function aiErrorMessage(err: unknown, fallback: string): string {
+  const code = (err as { code?: string }).code;
+  if (code === 'AI_NOT_CONFIGURED') {
+    return 'IA não configurada no servidor — verifique GEMINI_API_KEY e GROQ_API_KEY no .env.';
+  }
+  // Cota do plano free esgotada: a mensagem do backend já explica o limite.
+  if (code === 'PLAN_REQUIRED') {
+    return err instanceof Error ? err.message : 'Limite do plano Free atingido.';
+  }
+  return fallback;
+}
+
 /**
- * Chat do copiloto. Em modo demo (sem login/chaves), responde localmente com
+ * Chat do copiloto. Em modo demo (sem login), responde localmente com
  * regras sobre os dados da tela — sempre marcado como demonstração.
  */
 export async function copilotChat(
   message: string,
   history: ChatTurn[],
   snapshot: ScreenSnapshot,
-): Promise<{ reply: string; demo: boolean }> {
+): Promise<{ reply: string; demo: boolean; quota?: AiQuota }> {
   if (!isDemoMode()) {
-    try {
-      const data = await post<{ reply: string }>('/api/ai/chat', {
-        message,
-        history,
-        screen: snapshot.screen,
-      });
-      return { reply: data.reply, demo: false };
-    } catch (err) {
-      if ((err as { code?: string }).code !== 'AI_NOT_CONFIGURED') throw err;
-      // Sem chave no servidor: cai para o modo demo local.
-    }
+    const data = await post<{ reply: string; quota?: AiQuota }>('/api/ai/chat', {
+      message,
+      history,
+      screen: snapshot.screen,
+    });
+    return { reply: data.reply, demo: false, quota: data.quota };
   }
   return { reply: demoReply(message, snapshot), demo: true };
 }
@@ -79,17 +96,13 @@ export async function copilotAnalyze(
   snapshot: ScreenSnapshot,
 ): Promise<{ analysis: PortfolioAnalysis; demo: boolean }> {
   if (!isDemoMode()) {
-    try {
-      const analysis = await post<PortfolioAnalysis>('/api/ai/analyze', {
-        aporte,
-        screen: snapshot.screen,
-        assetTicker: snapshot.ticker,
-        profile: snapshot.profile,
-      });
-      return { analysis, demo: false };
-    } catch (err) {
-      if ((err as { code?: string }).code !== 'AI_NOT_CONFIGURED') throw err;
-    }
+    const analysis = await post<PortfolioAnalysis>('/api/ai/analyze', {
+      aporte,
+      screen: snapshot.screen,
+      assetTicker: snapshot.ticker,
+      profile: snapshot.profile,
+    });
+    return { analysis, demo: false };
   }
   return { analysis: demoAnalysis(snapshot), demo: true };
 }
@@ -150,7 +163,7 @@ function demoAnalysis(s: ScreenSnapshot): PortfolioAnalysis {
       'Renda variável oscila; nunca aloque a reserva de emergência em risco.',
     ],
     passo_educativo:
-      'A divisão parte do princípio de proteger a base (reserva + renda fixa) antes de buscar retorno em renda variável. Configure GEMINI_API_KEY e ANTHROPIC_API_KEY no .env para a análise real com contexto de mercado.',
+      'A divisão parte do princípio de proteger a base (reserva + renda fixa) antes de buscar retorno em renda variável. Faça login com GEMINI_API_KEY e GROQ_API_KEY configuradas no .env para a análise real com contexto de mercado.',
     disclaimer: DISCLAIMER,
   };
 }

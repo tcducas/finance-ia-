@@ -1,12 +1,13 @@
 import { MessageSquare, ReceiptText, Star, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { UserPlanTable } from '../components/admin/UserPlanTable';
 import { StatCard } from '../components/ui/StatCard';
 import { type AdminStats, fetchAdminStats } from '../services/account';
 
 /**
  * Tela: Admin — rota `/app/admin`
  * Menu: rodapé (visível só para is_admin=true, protegida por RequireAdmin)
- * Estatísticas globais da plataforma (usuários, transações, mensagens de IA).
+ * Estatísticas globais da plataforma e concessão de plano por usuário.
  */
 export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -25,11 +26,13 @@ export function AdminPage() {
   }, []);
 
   return (
-    <section aria-labelledby="admin-titulo" className="mx-auto max-w-5xl">
-      <h2 id="admin-titulo" className="mb-1 text-2xl font-bold tracking-tight">
+    <section aria-labelledby="admin-titulo" className="mx-auto max-w-6xl space-y-6">
+      <h2 id="admin-titulo" className="mb-1 font-display text-2xl font-bold tracking-tight">
         Admin
       </h2>
-      <p className="mb-6 text-sm text-ink-muted">Números gerais da plataforma.</p>
+      <p className="mb-6 text-sm text-ink-muted">
+        Números gerais da plataforma e concessão de plano.
+      </p>
 
       {error && (
         <p role="alert" className="mb-4 text-sm" style={{ color: 'var(--status-bad)' }}>
@@ -57,6 +60,13 @@ export function AdminPage() {
           value={fmt(stats?.watchlistItems)}
           loading={loading}
         />
+      </div>
+
+      <div className="mt-8">
+        <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
+          Planos por usuário
+        </h3>
+        <UserPlanTable />
       </div>
     </section>
   );

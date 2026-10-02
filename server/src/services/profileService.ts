@@ -1,6 +1,12 @@
 import { AppError } from '../errors/AppError.js';
 import { fromPostgrest } from '../errors/postgrest.js';
 import type { Json } from '../lib/database.types.js';
+import {
+  entitlementsFor,
+  planFrom,
+  type Entitlements,
+  type Plan,
+} from '../lib/entitlements.js';
 import { scoreRiskProfile, type OnboardingAnswers, type RiskProfile } from '../lib/riskScore.js';
 import type { UserClient } from '../lib/supabase.js';
 
@@ -9,6 +15,11 @@ export interface Me {
   email: string | null;
   full_name: string | null;
   is_admin: boolean;
+  /** Plano comercial — separado de is_admin, que é permissão administrativa. */
+  plan: Plan;
+  plan_updated_at: string | null;
+  /** O que o plano libera; a UI espelha isto em vez de recalcular regra. */
+  entitlements: Entitlements;
   onboarded_at: string | null;
   risk_profile: RiskProfile | null;
 }
@@ -29,11 +40,16 @@ export async function getMe(db: UserClient, userId: string): Promise<Me> {
     .maybeSingle();
   if (investorError) throw fromPostgrest(investorError);
 
+  const plan = planFrom(profile.plan);
+
   return {
     id: profile.id,
     email: profile.email,
     full_name: profile.full_name,
     is_admin: profile.is_admin,
+    plan,
+    plan_updated_at: profile.plan_updated_at,
+    entitlements: entitlementsFor(plan),
     onboarded_at: profile.onboarded_at,
     risk_profile: investor?.risk_profile ?? null,
   };

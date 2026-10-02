@@ -25,13 +25,42 @@ export interface Ticker24h {
   priceChange: number;
   priceChangePercent: number;
   volume: number;
+  /** Volume em moeda de cotação (BRL/USDT) — comparável entre pares. */
+  quoteVolume: number;
   highPrice: number;
   lowPrice: number;
+  openPrice: number;
+  trades: number;
 }
 
 export interface Kline {
   openTime: number;
+  open: number;
+  high: number;
+  low: number;
   close: number;
+  volume: number;
+}
+
+/** Nível do livro de ofertas: [preço, quantidade]. */
+export interface DepthLevel {
+  price: number;
+  qty: number;
+}
+
+export interface OrderBook {
+  lastUpdateId: number;
+  bids: DepthLevel[];
+  asks: DepthLevel[];
+}
+
+export interface Trade {
+  id: number;
+  price: number;
+  qty: number;
+  time: number;
+  /** true = comprador era o maker, ou seja, a agressão foi de VENDA. */
+  isBuyerMaker: boolean;
 }
 
 /** Arredonda para o step/tick permitido pela exchange (porta de gridBot.js). */
@@ -108,8 +137,11 @@ interface RawTicker24h {
   priceChange: string;
   priceChangePercent: string;
   volume: string;
+  quoteVolume?: string;
   highPrice: string;
   lowPrice: string;
+  openPrice?: string;
+  count?: number;
 }
 
 export async function tickers24h(symbols: string[]): Promise<Ticker24h[]> {
@@ -122,8 +154,11 @@ export async function tickers24h(symbols: string[]): Promise<Ticker24h[]> {
     priceChange: Number(t.priceChange),
     priceChangePercent: Number(t.priceChangePercent),
     volume: Number(t.volume),
+    quoteVolume: Number(t.quoteVolume ?? 0),
     highPrice: Number(t.highPrice),
     lowPrice: Number(t.lowPrice),
+    openPrice: Number(t.openPrice ?? 0),
+    trades: Number(t.count ?? 0),
   }));
 }
 
@@ -131,5 +166,47 @@ export async function klines(symbol: string, interval: string, limit: number): P
   const body = (await binanceGet(
     `/api/v3/klines?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=${limit}`,
   )) as Array<[number, string, string, string, string, string]>;
-  return body.map((k) => ({ openTime: k[0], close: Number(k[4]) }));
+  return body.map((k) => ({
+    openTime: k[0],
+    open: Number(k[1]),
+    high: Number(k[2]),
+    low: Number(k[3]),
+    close: Number(k[4]),
+    volume: Number(k[5]),
+  }));
+}
+
+/**
+ * Livro de ofertas (profundidade). SOMENTE LEITURA: o Aura mostra onde está a
+ * liquidez para o usuário entender o mercado — nunca envia ordem.
+ */
+export async function depth(symbol: string, limit: number): Promise<OrderBook> {
+  const body = (await binanceGet(
+    `/api/v3/depth?symbol=${encodeURIComponent(symbol)}&limit=${limit}`,
+  )) as {
+    lastUpdateId?: number;
+    bids?: Array<[string, string]>;
+    asks?: Array<[string, string]>;
+  };
+  const toLevels = (rows: Array<[string, string]>): DepthLevel[] =>
+    rows.map(([price, qty]) => ({ price: Number(price), qty: Number(qty) }));
+  return {
+    lastUpdateId: body.lastUpdateId ?? 0,
+    bids: toLevels(body.bids ?? []),
+    asks: toLevels(body.asks ?? []),
+  };
+}
+
+/** Negócios recentes do par — o "tape" do board. */
+export async function recentTrades(symbol: string, limit: number): Promise<Trade[]> {
+  const body = (await binanceGet(
+    `/api/v3/trades?symbol=${encodeURIComponent(symbol)}&limit=${limit}`,
+  )) as Array<{ id: number; price: string; qty: string; time: number; isBuyerMaker: boolean }>;
+  return body.map((t) => ({
+    id: t.id,
+    price: Number(t.price),
+    qty: Number(t.qty),
+    time: t.time,
+    isBuyerMaker: t.isBuyerMaker,
+  }));
 }

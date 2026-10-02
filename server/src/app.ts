@@ -3,6 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { env } from './env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { attachPlan } from './middlewares/attachPlan.js';
 import { apiLimiter, aiLimiter, marketLimiter } from './middlewares/rateLimit.js';
 import { requestContext } from './middlewares/requestContext.js';
 import { requireAdmin } from './middlewares/requireAdmin.js';
@@ -11,9 +12,11 @@ import { adminRouter } from './routes/admin.js';
 import { aiRouter } from './routes/ai.js';
 import { assetsRouter } from './routes/assets.js';
 import { budgetsRouter } from './routes/budgets.js';
+import { goalsRouter, planningRouter } from './routes/goals.js';
 import { healthRouter } from './routes/health.js';
 import { marketRouter } from './routes/market.js';
 import { meRouter } from './routes/me.js';
+import { portfolioRouter } from './routes/portfolio.js';
 import { onboardingRouter } from './routes/onboarding.js';
 import { summaryRouter } from './routes/summary.js';
 import { transactionsRouter } from './routes/transactions.js';
@@ -46,7 +49,9 @@ export function createApp(): express.Express {
 
   app.use('/api/health', healthRouter);
   // Público: não expõe dado de usuário; a chave externa fica no backend.
-  app.use('/api/market', marketLimiter, marketRouter);
+  // attachPlan autentica de forma OPCIONAL — sem token vale o plano free, e os
+  // limites do plano (mercados, períodos de candle, livro) saem daí.
+  app.use('/api/market', marketLimiter, attachPlan, marketRouter);
   app.use('/api/me', requireAuth, meRouter);
   app.use('/api/onboarding', requireAuth, onboardingRouter);
   app.use('/api/admin', requireAuth, requireAdmin, adminRouter);
@@ -54,8 +59,11 @@ export function createApp(): express.Express {
   app.use('/api/watchlist', requireAuth, watchlistRouter);
   app.use('/api/budgets', requireAuth, budgetsRouter);
   app.use('/api/assets', requireAuth, assetsRouter);
-  app.use('/api/summary', requireAuth, summaryRouter);
-  app.use('/api/ai', requireAuth, aiLimiter, aiRouter);
+  app.use('/api/summary', requireAuth, attachPlan, summaryRouter);
+  app.use('/api/portfolio', requireAuth, attachPlan, portfolioRouter);
+  app.use('/api/goals', requireAuth, goalsRouter);
+  app.use('/api/planning', requireAuth, planningRouter);
+  app.use('/api/ai', requireAuth, attachPlan, aiLimiter, aiRouter);
 
   // 404 padrão para rotas de API desconhecidas.
   app.use('/api', (_req, res) => {

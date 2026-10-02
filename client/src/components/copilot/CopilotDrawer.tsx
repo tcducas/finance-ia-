@@ -6,6 +6,7 @@ import { useCopilot } from '../../context/CopilotContext';
 import { useFinance } from '../../context/FinanceContext';
 import { buildInsight } from '../../lib/insights';
 import {
+  aiErrorMessage,
   copilotAnalyze,
   copilotChat,
   type ChatTurn,
@@ -87,13 +88,13 @@ export function CopilotDrawer() {
         ...prev,
         { id: crypto.randomUUID(), role: 'assistant', content: reply, demo },
       ]);
-    } catch {
+    } catch (err) {
       setEntries((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'Não consegui responder agora — tente de novo em instantes.',
+          content: aiErrorMessage(err, 'Não consegui responder agora — tente de novo em instantes.'),
         },
       ]);
     } finally {
@@ -128,13 +129,13 @@ export function CopilotDrawer() {
         { id: crypto.randomUUID(), role: 'assistant', content: '', analysis, demo },
       ]);
       setAporte('');
-    } catch {
+    } catch (err) {
       setEntries((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'A análise não está disponível agora — tente de novo em instantes.',
+          content: aiErrorMessage(err, 'A análise não está disponível agora — tente de novo em instantes.'),
         },
       ]);
     } finally {

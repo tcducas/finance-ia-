@@ -1,7 +1,14 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app.js';
-import { makeToken } from './helpers.js';
+import { makeToken, stubDb } from './helpers.js';
+
+// attachPlan lê profiles.plan em toda rota com plano: sem este duplo, a
+// requisição esperaria um Supabase real e o teste estouraria o timeout.
+vi.mock('../lib/supabase.js', () => ({
+  createUserClient: vi.fn(),
+  createServiceClient: vi.fn(),
+}));
 
 vi.mock('../services/summaryService.js', () => ({
   getPeriodSummary: vi.fn(),
@@ -12,8 +19,12 @@ const service = vi.mocked(await import('../services/summaryService.js'));
 
 const app = createApp();
 
+const supabase = vi.mocked(await import('../lib/supabase.js'));
+
 beforeEach(() => {
   vi.clearAllMocks();
+  supabase.createUserClient.mockReturnValue(stubDb());
+  supabase.createServiceClient.mockReturnValue(stubDb());
 });
 
 describe('GET /api/summary', () => {

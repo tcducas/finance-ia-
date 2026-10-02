@@ -25,7 +25,7 @@ export function PerfilPage() {
 
   return (
     <section aria-labelledby="perfil-titulo" className="mx-auto max-w-3xl">
-      <h2 id="perfil-titulo" className="mb-1 text-2xl font-bold tracking-tight">
+      <h2 id="perfil-titulo" className="mb-1 font-display text-2xl font-bold tracking-tight">
         Perfil
       </h2>
       <p className="mb-6 text-sm text-ink-muted">Sua conta e preferências.</p>

@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../lib/categories';
+import {
+  CUSTOM_CATEGORY_MAX,
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+  OTHER_ID,
+  resolveCategory,
+} from '../../lib/categories';
 import { todayISO } from '../../lib/format';
 import type { TransactionType } from '../../types/finance';
 import { Modal } from '../ui/Modal';
@@ -15,6 +21,7 @@ export function TransactionForm() {
   const [type, setType] = useState<TransactionType>('despesa');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('mercado');
+  const [customCategory, setCustomCategory] = useState('');
   const [occurredOn, setOccurredOn] = useState(todayISO());
   const [description, setDescription] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
@@ -26,6 +33,7 @@ export function TransactionForm() {
   function switchType(next: TransactionType) {
     setType(next);
     setCategory(next === 'receita' ? 'salario' : 'mercado');
+    setCustomCategory('');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -41,13 +49,14 @@ export function TransactionForm() {
       await addTransaction({
         type,
         amount: value,
-        category,
+        category: resolveCategory(category, customCategory),
         occurred_on: occurredOn,
         description: description.trim() || undefined,
         is_recurring: isRecurring,
       });
       setAmount('');
       setDescription('');
+      setCustomCategory('');
       setIsRecurring(false);
       closeTransactionForm();
     } catch (err) {
@@ -118,6 +127,24 @@ export function TransactionForm() {
             />
           </label>
         </div>
+
+        {category === OTHER_ID && (
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">
+              Qual categoria? <span className="font-normal text-ink-muted">(opcional)</span>
+            </span>
+            <input
+              value={customCategory}
+              maxLength={CUSTOM_CATEGORY_MAX}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="Ex.: Pet, Academia, Presentes…"
+              className={inputClass}
+            />
+            <span className="mt-1 block text-xs text-ink-muted">
+              Em branco, a movimentação fica em “Outros”.
+            </span>
+          </label>
+        )}
 
         <label className="block text-sm">
           <span className="mb-1 block font-medium">Descrição (opcional)</span>

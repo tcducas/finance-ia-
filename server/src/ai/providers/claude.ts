@@ -2,69 +2,27 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../../env.js';
 import { AppError } from '../../errors/AppError.js';
 import { logger } from '../../lib/logger.js';
+import {
+  ANALYSIS_JSON_SCHEMA,
+  analysisOutputSchema,
+  TOOL_DESCRIPTION,
+  TOOL_NAME,
+  type PortfolioAnalysis,
+} from '../analysisSchema.js';
 import { DISCLAIMER } from '../prompts.js';
+import type { ToolSpec } from '../toolSpec.js';
 
 /**
  * Claude — análise de carteira com saída estruturada confiável via tool use
  * forçado (tool_choice) + strict. Recebe SOMENTE contexto anonimizado.
  */
 
-export interface AllocationSuggestion {
-  classe: string;
-  pct: number;
-  justificativa: string;
-}
-
-export interface PortfolioAnalysis {
-  resumo: string;
-  atual: string;
-  sugerido: AllocationSuggestion[];
-  riscos: string[];
-  passo_educativo: string;
-  disclaimer: string;
-}
-
-const ANALYSIS_TOOL: Anthropic.Messages.Tool = {
-  name: 'entregar_analise',
-  description: 'Entrega a análise educativa estruturada de alocação.',
-  strict: true,
-  input_schema: {
-    type: 'object',
-    additionalProperties: false,
-    required: ['resumo', 'atual', 'sugerido', 'riscos', 'passo_educativo'],
-    properties: {
-      resumo: { type: 'string', description: 'Resumo da análise em 1–2 frases.' },
-      atual: {
-        type: 'string',
-        description: 'Leitura da situação atual do usuário (percentuais/faixas).',
-      },
-      sugerido: {
-        type: 'array',
-        description: 'Alocação sugerida; os pct devem somar 100.',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['classe', 'pct', 'justificativa'],
-          properties: {
-            classe: { type: 'string' },
-            pct: { type: 'integer' },
-            justificativa: { type: 'string' },
-          },
-        },
-      },
-      riscos: { type: 'array', items: { type: 'string' } },
-      passo_educativo: {
-        type: 'string',
-        description: 'Explicação didática do porquê da alocação.',
-      },
-    },
-  },
-};
-
-export async function claudeAnalyze(
+/** Saída estruturada genérica via tool use forçado + strict. */
+export async function claudeStructured<T>(
   systemPrompt: string,
   userContent: string,
-): Promise<PortfolioAnalysis> {
+  tool: ToolSpec<T>,
+): Promise<T> {
   if (!env.ANTHROPIC_API_KEY) {
     throw new AppError(
       'IA não configurada no servidor (ANTHROPIC_API_KEY ausente).',
@@ -83,8 +41,15 @@ export async function claudeAnalyze(
       system: systemPrompt,
       // tool_choice forçado não combina com thinking — desliga explicitamente.
       thinking: { type: 'disabled' },
-      tools: [ANALYSIS_TOOL],
-      tool_choice: { type: 'tool', name: 'entregar_analise' },
+      tools: [
+        {
+          name: tool.name,
+          description: tool.description,
+          strict: true,
+          input_schema: tool.jsonSchema as Anthropic.Messages.Tool.InputSchema,
+        },
+      ],
+      tool_choice: { type: 'tool', name: tool.name },
       messages: [{ role: 'user', content: userContent }],
     });
   } catch (error) {
@@ -102,6 +67,28 @@ export async function claudeAnalyze(
     throw new AppError('Resposta estruturada ausente do provedor.', 'AI_UNAVAILABLE', 502);
   }
 
-  const input = toolUse.input as Omit<PortfolioAnalysis, 'disclaimer'>;
-  return { ...input, disclaimer: DISCLAIMER };
+  // Mesmo com strict, revalidamos: o contrato do app não depende do provedor.
+  const parsed = tool.schema.safeParse(toolUse.input);
+  if (!parsed.success) {
+    logger.warn(
+      { provider: 'claude', issues: parsed.error.issues.length },
+      '[ai] saída fora do contrato',
+    );
+    throw new AppError('Resposta estruturada inválida do provedor.', 'AI_UNAVAILABLE', 502);
+  }
+  return parsed.data;
+}
+
+const ANALYSIS_TOOL: ToolSpec<PortfolioAnalysis> = {
+  name: TOOL_NAME,
+  description: TOOL_DESCRIPTION,
+  jsonSchema: ANALYSIS_JSON_SCHEMA,
+  schema: analysisOutputSchema.transform((data) => ({ ...data, disclaimer: DISCLAIMER })),
+};
+
+export function claudeAnalyze(
+  systemPrompt: string,
+  userContent: string,
+): Promise<PortfolioAnalysis> {
+  return claudeStructured(systemPrompt, userContent, ANALYSIS_TOOL);
 }

@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { formatCurrency } from '../../lib/format';
+import { formatMoney } from '../../lib/format';
 import type { Quote } from '../../types/market';
 
 interface QuoteListProps {
@@ -24,6 +24,19 @@ function ChangeBadge({ value }: { value: number }) {
   );
 }
 
+/** Ações e cripto convivem na mesma lista, então cada linha diz de onde vem. */
+function MarketBadge({ market }: { market: Quote['market'] }) {
+  const crypto = market === 'CRYPTO';
+  return (
+    <span
+      className="rounded-full border border-line px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted"
+      title={crypto ? 'Cripto — cotação em tempo real' : 'Ação/FII brasileiro — atraso de ~15 min'}
+    >
+      {crypto ? 'Cripto' : 'B3'}
+    </span>
+  );
+}
+
 export function QuoteList({ quotes, onRemove, 'aria-label': ariaLabel }: QuoteListProps) {
   if (quotes.length === 0) {
     return (
@@ -36,17 +49,21 @@ export function QuoteList({ quotes, onRemove, 'aria-label': ariaLabel }: QuoteLi
     <ul className="space-y-2" aria-label={ariaLabel}>
       {quotes.map((q) => (
         <li
-          key={q.ticker}
+          key={`${q.market}:${q.ticker}`}
           className="group flex items-center gap-3 rounded-2xl border border-line bg-elevated px-4 py-3"
         >
           <Link
-            to={`/app/investimentos/${encodeURIComponent(q.ticker)}`}
+            // Prefixo explícito: evita o backend ter de adivinhar o mercado.
+            to={`/app/investimentos/${encodeURIComponent(`${q.market}:${q.ticker}`)}`}
             className="min-w-0 flex-1 outline-none focus-visible:text-gold"
           >
-            <p className="text-sm font-semibold">{q.ticker}</p>
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              {q.ticker}
+              <MarketBadge market={q.market} />
+            </p>
             <p className="truncate text-xs text-ink-muted">{q.name}</p>
           </Link>
-          <p className="text-sm font-medium tabular-nums">{formatCurrency(q.price)}</p>
+          <p className="text-sm font-medium tabular-nums">{formatMoney(q.price, q.currency)}</p>
           <ChangeBadge value={q.changePercent} />
           {onRemove && (
             <button

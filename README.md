@@ -9,7 +9,7 @@ Copiloto financeiro inteligente: acompanha movimentações, orçamento, patrimô
 - **Frontend:** React 19 + Vite, TypeScript, TailwindCSS 4, Recharts, Lucide
 - **Backend:** Express 5 + tsx, TypeScript (monorepo npm workspaces, porta única 3000)
 - **Banco:** Supabase (PostgreSQL) com RLS · Auth Supabase + JWT
-- **IA:** Google Gemini + Claude (Anthropic), roteadas por um `AiRouter`
+- **IA:** Google Gemini +  gorq , roteadas por um `AiRouter`
 
 ## Como rodar
 
@@ -40,7 +40,7 @@ server/   # Express + tsx  (routes, controllers, services, middlewares, schemas,
 supabase/migrations/   # YYYYMMDDHHMMSS_*.sql
 ```
 
-## Progresso da Fase 1
+## Progresso 
 
 - [x] **1.0 — Fundação do monorepo**: workspaces `client`/`server` servidos na porta 3000 (Vite em modo middleware no dev), design tokens claro/escuro (dourado, `prefers-color-scheme`, `prefers-reduced-motion`), `MainLayout` com os 4 destinos (sidebar no desktop, barra inferior no mobile), Copiloto como drawer e botão "+" global, validação de env com Zod no boot, `errorHandler` central (`{ data }` / `{ error: { message, code } }`), rota `/api/health`. Legado Python/React 18 removido.
 - [x] **1.1 — Migrations** `transactions`, `budgets`, `assets` (+ `watchlist`) com RLS por operação; `database.types.ts` no formato do `supabase gen types` (regenerar quando o projeto estiver linkado). *Aplicação real pendente das credenciais do Supabase.*
@@ -60,7 +60,7 @@ supabase/migrations/   # YYYYMMDDHHMMSS_*.sql
 
 Sem `VITE_SUPABASE_*` o app roda em **modo demonstração** (dados no localStorage, selo "demo" na topbar). Para ligar cada serviço, preencha o `.env` (copie de `.env.example`):
 
-1. **IA** — `GEMINI_API_KEY` (chat) e `ANTHROPIC_API_KEY` (análise). Basta preencher e reiniciar: o copiloto sai do modo demo sozinho.
+1. **IA** — `GEMINI_API_KEY` (chat) e `GROQ_API_KEY` (análise). Basta preencher e reiniciar: o copiloto sai do modo demo sozinho.
 2. **Mercado** — `BRAPI_TOKEN` (brapi.dev, plano gratuito) para cotações reais; sem ele, os movers do dia já funcionam e o resto usa dados de exemplo rotulados.
 3. **Supabase** — no backend `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE`, `JWT_SECRET` (o *Legacy JWT Secret* do projeto, HS256); no client `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Aplique as migrations e regenere os tipos:
    ```bash

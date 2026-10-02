@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app.js';
+import { entitlementsFor } from '../lib/entitlements.js';
 import type { Me } from '../services/profileService.js';
 import { makeToken, TEST_USER_ID } from './helpers.js';
 
@@ -17,6 +18,9 @@ const me: Me = {
   email: 'user@example.com',
   full_name: 'Fulano',
   is_admin: false,
+  plan: 'free',
+  plan_updated_at: null,
+  entitlements: entitlementsFor('free'),
   onboarded_at: null,
   risk_profile: null,
 };

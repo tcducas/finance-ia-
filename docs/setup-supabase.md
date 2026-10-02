@@ -27,6 +27,7 @@ Cole tudo no `.env` da raiz (já existe, com os campos prontos). Salve.
 
 ## 3. Rodar as migrations
 
+
 **Opção A — SQL Editor (mais rápido):** Dashboard → **SQL Editor** → **New query** → cole o
 conteúdo de `supabase/all_migrations.sql` → **Run**.
 

@@ -46,3 +46,26 @@ export function categoryLabel(id: string): string {
 export function categoryColor(id: string): string {
   return byId.get(id)?.chartVar ?? 'var(--chart-other)';
 }
+
+/** Id da categoria "Outros" — o único slot que aceita texto livre do usuário. */
+export const OTHER_ID = 'outros';
+
+/** Limite de caracteres do texto livre (cabe no `category text` do banco). */
+export const CUSTOM_CATEGORY_MAX = 40;
+
+/**
+ * Resolve a categoria final de um formulário: fora de "Outros" vale o select;
+ * em "Outros", vale o texto livre. Quando o texto repete o nome de uma
+ * categoria fixa, devolve o id dela — evita "Mercado" convivendo com
+ * "mercado". Texto vazio mantém "outros", então o campo segue opcional.
+ */
+export function resolveCategory(selected: string, customText: string): string {
+  if (selected !== OTHER_ID) return selected;
+  const text = customText.trim().replace(/\s+/g, ' ').slice(0, CUSTOM_CATEGORY_MAX);
+  if (!text) return OTHER_ID;
+  const lower = text.toLowerCase();
+  const builtin = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].find(
+    (c) => c.id === lower || c.label.toLowerCase() === lower,
+  );
+  return builtin ? builtin.id : text;
+}

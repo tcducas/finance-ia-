@@ -3,18 +3,13 @@ import { useFinance } from '../../context/FinanceContext';
 import { categoryColor, categoryLabel } from '../../lib/categories';
 import { formatCurrency, formatDayMonth } from '../../lib/format';
 import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
 
 export function TransactionList() {
   const { transactions, loading, removeTransaction, openTransactionForm } = useFinance();
 
   if (loading) {
-    return (
-      <div className="space-y-2">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-16 animate-pulse rounded-2xl bg-line/60" />
-        ))}
-      </div>
-    );
+    return <Skeleton className="h-16" rows={3} />;
   }
 
   if (transactions.length === 0) {

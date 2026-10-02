@@ -267,3 +267,126 @@ export function parseAssetsCsv(text: string): ImportParse<AssetInput> {
 
   return { rows, issues, total: records.length };
 }
+
+// --- Carteira de investimentos ----------------------------------------------
+
+const HOLDING_ALIASES = {
+  ticker: ['ticker', 'ativo', 'papel', 'codigo', 'simbolo', 'symbol', 'produto'],
+  quantity: ['quantidade', 'qtd', 'qtde', 'quantity', 'cotas', 'unidades'],
+  avgPrice: ['precomedio', 'pm', 'custo', 'precodecusto', 'avgprice', 'preco', 'price', 'valorunitario'],
+  assetClass: ['classe', 'tipo', 'categoria', 'class', 'assetclass', 'segmento'],
+  market: ['mercado', 'market', 'bolsa', 'exchange'],
+  date: ['data', 'dataaporte', 'datacompra', 'date', 'acquiredon'],
+  dividends: ['proventos', 'dividendos', 'dividends', 'rendimentos'],
+};
+
+/** Classes aceitas pelo backend (server/src/lib/portfolioAnalysis.ts). */
+export type AssetClassId =
+  | 'acao'
+  | 'fii'
+  | 'etf'
+  | 'cripto'
+  | 'renda_fixa'
+  | 'internacional'
+  | 'caixa'
+  | 'outro';
+
+export interface HoldingInput {
+  ticker: string;
+  market?: 'BR' | 'CRYPTO' | 'US';
+  asset_class?: AssetClassId;
+  quantity: number;
+  avg_price: number;
+  acquired_on?: string | null;
+  dividends_received?: number;
+}
+
+function normalizeWord(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/** Rótulo livre de classe → id do backend. */
+export function normalizeAssetClass(raw: string, ticker: string): AssetClassId {
+  const s = normalizeWord(raw);
+  if (/fii|imobiliario|fundoimobiliario/.test(s)) return 'fii';
+  if (/etf|indice/.test(s)) return 'etf';
+  if (/cripto|crypto|bitcoin|moeda digital/.test(s)) return 'cripto';
+  if (/rendafixa|tesouro|cdb|lci|lca|debenture|poupanca/.test(s)) return 'renda_fixa';
+  if (/internacional|stock|bdr|exterior|eua|us/.test(s)) return 'internacional';
+  if (/caixa|conta|liquidez/.test(s)) return 'caixa';
+  if (/acao|acoes|stock|equity/.test(s)) return 'acao';
+  if (s) return 'outro';
+  // Sem classe informada, o formato do ticker é o melhor palpite disponível.
+  const t = ticker.toUpperCase();
+  if (/11$/.test(t)) return 'fii';
+  if (/(USDT|USDC|BRL|BUSD)$/.test(t) && t.length > 5) return 'cripto';
+  if (/^[A-Z]{4}\d{1,2}$/.test(t)) return 'acao';
+  return 'outro';
+}
+
+/** Mercado a partir do rótulo ou do formato do ticker. */
+export function normalizeMarket(raw: string, ticker: string): 'BR' | 'CRYPTO' | 'US' {
+  const s = normalizeWord(raw);
+  if (/cripto|crypto|binance/.test(s)) return 'CRYPTO';
+  if (/us|eua|nasdaq|nyse|internacional|nomad|avenue/.test(s)) return 'US';
+  if (/br|b3|bovespa|nacional/.test(s)) return 'BR';
+  const t = ticker.toUpperCase();
+  if (/^[A-Z0-9]{2,15}(USDT|USDC|BRL|BUSD)$/.test(t)) return 'CRYPTO';
+  if (/^[A-Z]{4}\d{1,2}$/.test(t)) return 'BR';
+  if (/^[A-Z]{1,5}$/.test(t)) return 'US';
+  return 'BR';
+}
+
+/**
+ * CSV de carteira exportado de corretora. Aceita cabeçalhos variados e tolera
+ * colunas ausentes: só ticker, quantidade e preço médio são obrigatórios — sem
+ * data de aporte a análise fica sem TIR, e a UI avisa.
+ */
+export function parseHoldingsCsv(text: string): ImportParse<HoldingInput> {
+  const { records } = parseCsv(text);
+  const rows: HoldingInput[] = [];
+  const issues: ImportIssue[] = [];
+
+  records.forEach((record, index) => {
+    const line = index + 2;
+    const ticker = pick(record, HOLDING_ALIASES.ticker)
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+    const rawQty = pick(record, HOLDING_ALIASES.quantity);
+    const rawPrice = pick(record, HOLDING_ALIASES.avgPrice);
+    const quantity = parseAmount(rawQty);
+    const avgPrice = parseAmount(rawPrice);
+
+    if (!ticker || !/^[A-Z0-9^.]{1,20}$/.test(ticker)) {
+      issues.push({ line, message: `ticker inválido ("${ticker}")` });
+      return;
+    }
+    if (quantity === null || quantity <= 0) {
+      issues.push({ line, message: `quantidade inválida ("${rawQty}")` });
+      return;
+    }
+    if (avgPrice === null || avgPrice < 0) {
+      issues.push({ line, message: `preço médio inválido ("${rawPrice}")` });
+      return;
+    }
+
+    const dividends = parseAmount(pick(record, HOLDING_ALIASES.dividends));
+
+    rows.push({
+      ticker,
+      market: normalizeMarket(pick(record, HOLDING_ALIASES.market), ticker),
+      asset_class: normalizeAssetClass(pick(record, HOLDING_ALIASES.assetClass), ticker),
+      quantity,
+      avg_price: avgPrice,
+      acquired_on: parseDate(pick(record, HOLDING_ALIASES.date)),
+      dividends_received: dividends !== null && dividends > 0 ? dividends : 0,
+    });
+  });
+
+  return { rows, issues, total: records.length };
+}

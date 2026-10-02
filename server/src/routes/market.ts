@@ -12,3 +12,4 @@ marketRouter.get('/movers', controller.movers);
 marketRouter.get('/search', controller.search);
 marketRouter.get('/validate/:ticker', controller.validate);
 marketRouter.get('/asset/:ticker', controller.asset);
+marketRouter.get('/board/:ticker', controller.board);

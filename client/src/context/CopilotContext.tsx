@@ -9,7 +9,10 @@ import {
 import { useLocation } from 'react-router-dom';
 
 export interface CopilotTarget {
-  /** Tela em foco: carteira | gastos | investimentos | ativo | planejamento. */
+  /**
+   * Tela em foco: carteira | gastos | planejamento | investimentos | ativo |
+   * cripto | acoes-b3 | internacional.
+   */
   screen: string;
   ticker?: string;
   /** Mensagem inicial a disparar ao abrir (ex.: "explique este ativo"). */
@@ -35,6 +38,9 @@ function screenFromPath(pathname: string): string {
   const p = appPath(pathname);
   if (p.startsWith('/gastos')) return 'gastos';
   if (p.startsWith('/planejamento')) return 'planejamento';
+  if (p.startsWith('/cripto')) return 'cripto';
+  if (p.startsWith('/acoes')) return 'acoes-b3';
+  if (p.startsWith('/internacional')) return 'internacional';
   if (/^\/investimentos\/.+/.test(p)) return 'ativo';
   if (p.startsWith('/investimentos')) return 'investimentos';
   return 'carteira';

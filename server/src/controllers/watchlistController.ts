@@ -10,7 +10,7 @@ const addSchema = z.object({
   ticker: z
     .string()
     .trim()
-    .regex(/^(?:(?:BR|CRYPTO):)?[A-Za-z0-9^.]{1,20}$/, 'Ticker inválido'),
+    .regex(/^(?:(?:BR|CRYPTO|US):)?[A-Za-z0-9^.]{1,20}$/, 'Ticker inválido'),
   market: marketIdSchema.optional(),
 });
 

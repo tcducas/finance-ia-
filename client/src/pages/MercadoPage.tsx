@@ -1,6 +1,8 @@
-import { Clock, Plus, RefreshCw, TrendingUp } from 'lucide-react';
+import { ArrowRight, Bitcoin, Building2, Clock, Globe, Plus, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { QuoteList } from '../components/market/QuoteList';
+import { formatMoney } from '../lib/format';
 import {
   addWatchlist,
   fetchMovers,
@@ -8,38 +10,62 @@ import {
   listWatchlist,
   removeWatchlist,
 } from '../services/market';
-import type { Movers, Quote, WatchlistItem } from '../types/market';
+import type { MarketId, Movers, Quote, WatchlistItem } from '../types/market';
+import { Skeleton } from '../components/ui/Skeleton';
 
-const INDICES = ['^BVSP'];
+const INDICES = ['BR:^BVSP'];
+
+/** Pares em BRL: o app é brasileiro, então o preço já sai em real. */
+const CRYPTO_HIGHLIGHTS = ['CRYPTO:BTCBRL', 'CRYPTO:ETHBRL', 'CRYPTO:SOLBRL', 'CRYPTO:XRPBRL'];
+
+const MARKETS: Array<{ id: MarketId; label: string; placeholder: string }> = [
+  { id: 'BR', label: 'B3', placeholder: 'Ex.: PETR4' },
+  { id: 'CRYPTO', label: 'Cripto', placeholder: 'Ex.: BTCBRL' },
+  { id: 'US', label: 'EUA', placeholder: 'Ex.: AAPL' },
+];
+
+/** Atalhos para os boards dedicados — esta tela é o panorama, não o board. */
+const BOARDS = [
+  { to: '/app/acoes', label: 'Ações B3', icon: Building2, hint: 'candles e volume da B3' },
+  { to: '/app/cripto', label: 'Cripto', icon: Bitcoin, hint: 'livro de ofertas e negócios ao vivo' },
+  { to: '/app/internacional', label: 'Internacional', icon: Globe, hint: 'ações e ETFs em dólar' },
+];
 
 /**
- * Tela: Investimentos (monitor) — rota `/app/investimentos`
- * Menu: "Investimentos" (4º item)
- * Índices, watchlist e maiores altas/quedas do dia. Ver também AtivoDetalhePage.
+ * Tela: Investimentos (panorama) — rota `/app/investimentos`
+ * Menu: grupo "Mercados" → "Investimentos"
+ * Visão GERAL dos mercados: índices, destaques de cripto, watchlist (mista) e
+ * maiores altas/quedas da B3, com atalhos para os boards dedicados.
+ * Ver também AcoesB3Page, CriptoPage, InternacionalPage e AtivoDetalhePage.
  */
 export function MercadoPage() {
   const [indices, setIndices] = useState<Quote[]>([]);
+  const [crypto, setCrypto] = useState<Quote[]>([]);
   const [watchItems, setWatchItems] = useState<WatchlistItem[]>([]);
   const [watchQuotes, setWatchQuotes] = useState<Quote[]>([]);
   const [movers, setMovers] = useState<Movers | null>(null);
   const [placeholder, setPlaceholder] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [market, setMarket] = useState<MarketId>('BR');
   const [ticker, setTicker] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     const items = await listWatchlist();
-    const [idx, watch, mov] = await Promise.all([
+    const [idx, cry, watch, mov] = await Promise.all([
       fetchQuotes(INDICES),
-      fetchQuotes(items.map((i) => i.ticker)),
+      fetchQuotes(CRYPTO_HIGHLIGHTS),
+      // Prefixado: a watchlist mistura mercados e o backend não deve adivinhar.
+      fetchQuotes(items.map((i) => `${i.market}:${i.ticker}`)),
       fetchMovers(),
     ]);
     setWatchItems(items);
     setIndices(idx.data);
+    setCrypto(cry.data);
     setWatchQuotes(watch.data);
     setMovers(mov.data);
-    setPlaceholder([idx, watch, mov].some((r) => r.source === 'placeholder'));
+    setPlaceholder([idx, cry, watch, mov].some((r) => r.source === 'placeholder'));
     setLoading(false);
   }, []);
 
@@ -50,7 +76,7 @@ export function MercadoPage() {
   async function handleAdd(event: FormEvent) {
     event.preventDefault();
     try {
-      await addWatchlist(ticker);
+      await addWatchlist(ticker, market);
       setTicker('');
       setFormError(null);
       await refresh();
@@ -66,16 +92,28 @@ export function MercadoPage() {
     await refresh();
   }
 
+  const activeMarket = MARKETS.find((m) => m.id === market) ?? MARKETS[0];
+
   return (
     <section aria-labelledby="investimentos-titulo" className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="investimentos-titulo" className="text-2xl font-bold tracking-tight">
+          <h2 id="investimentos-titulo" className="font-display text-2xl font-bold tracking-tight">
             Investimentos
           </h2>
-          <p className="flex items-center gap-1.5 text-sm text-ink-muted">
-            <Clock className="size-3.5" aria-hidden />
-            Cotações com atraso (~15 min) · atualização manual no MVP
+          <p className="mb-1 text-sm text-ink-muted">
+            Panorama dos mercados. Para o board completo de cada um, use as abas abaixo.
+          </p>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-3.5" aria-hidden />
+              B3: atraso de ~15 min
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="size-3.5" aria-hidden />
+              Cripto: tempo real
+            </span>
+            <span>· atualização manual no MVP</span>
           </p>
         </div>
         <button
@@ -94,8 +132,8 @@ export function MercadoPage() {
           role="status"
           className="rounded-2xl border border-line bg-elevated px-4 py-2.5 text-xs text-ink-muted"
         >
-          <strong>Dados de exemplo</strong> — a API de mercado (brapi.dev) não está acessível
-          neste ambiente. Os valores exibidos são fictícios, para demonstração.
+          <strong>Dados de exemplo</strong> — a API de mercado não está acessível neste ambiente.
+          Os valores exibidos são fictícios, para demonstração.
         </p>
       )}
 
@@ -107,18 +145,58 @@ export function MercadoPage() {
               <p className="text-xl font-bold tabular-nums">
                 {q.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
               </p>
-              <span
-                className="text-sm font-semibold tabular-nums"
-                style={{
-                  color: q.changePercent >= 0 ? 'var(--status-good)' : 'var(--status-bad)',
-                }}
-              >
-                {q.changePercent >= 0 ? '+' : ''}
-                {q.changePercent.toFixed(2)}%
-              </span>
+              <ChangePercent value={q.changePercent} />
             </div>
           </div>
         ))}
+      </div>
+
+      <nav aria-label="Boards por mercado" className="grid gap-3 sm:grid-cols-3">
+        {BOARDS.map(({ to, label, icon: Icon, hint }) => (
+          <Link
+            key={to}
+            to={to}
+            className="group flex items-center gap-3 rounded-2xl border border-line bg-elevated p-4 transition-colors hover:border-gold"
+          >
+            <Icon className="size-5 text-gold" aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{label}</span>
+              <span className="block truncate text-xs text-ink-muted">{hint}</span>
+            </span>
+            <ArrowRight
+              className="size-4 text-ink-muted transition-colors group-hover:text-gold"
+              aria-hidden
+            />
+          </Link>
+        ))}
+      </nav>
+
+      <div>
+        <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink-muted uppercase tracking-wide">
+          <Bitcoin className="size-4" aria-hidden />
+          Cripto em destaque
+        </h3>
+        {loading ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {crypto.map((q) => (
+              <div key={q.ticker} className="rounded-2xl border border-line bg-elevated p-4">
+                <p className="truncate text-xs font-medium text-ink-muted uppercase tracking-wide">
+                  {q.name}
+                </p>
+                <p className="mt-1 text-lg font-bold tabular-nums">
+                  {formatMoney(q.price, q.currency)}
+                </p>
+                <ChangePercent value={q.changePercent} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -128,11 +206,33 @@ export function MercadoPage() {
               Minha watchlist
             </h3>
           </div>
+
+          <div
+            className="mb-2 flex rounded-full border border-line p-1 text-xs"
+            role="radiogroup"
+            aria-label="Mercado do ativo"
+          >
+            {MARKETS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="radio"
+                aria-checked={market === m.id}
+                onClick={() => setMarket(m.id)}
+                className={`flex-1 rounded-full px-3 py-1 font-medium transition-colors ${
+                  market === m.id ? 'bg-gold text-white' : 'text-ink-muted hover:text-ink'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={(e) => void handleAdd(e)} className="mb-3 flex gap-2">
             <input
               value={ticker}
               onChange={(e) => setTicker(e.target.value)}
-              placeholder="Adicionar ticker (ex.: PETR4)"
+              placeholder={`Adicionar ticker (${activeMarket?.placeholder})`}
               aria-label="Ticker para adicionar à watchlist"
               className="w-full rounded-xl border border-line bg-elevated px-3 py-2 text-sm uppercase outline-none transition-colors focus:border-gold"
             />
@@ -150,9 +250,13 @@ export function MercadoPage() {
             </p>
           )}
           {loading ? (
-            <div className="h-24 animate-pulse rounded-2xl bg-line/60" />
+            <Skeleton className="h-24" />
           ) : (
-            <QuoteList quotes={watchQuotes} onRemove={(t) => void handleRemove(t)} aria-label="Watchlist" />
+            <QuoteList
+              quotes={watchQuotes}
+              onRemove={(t) => void handleRemove(t)}
+              aria-label="Watchlist"
+            />
           )}
         </div>
 
@@ -160,20 +264,20 @@ export function MercadoPage() {
           <div>
             <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink-muted uppercase tracking-wide">
               <TrendingUp className="size-4" aria-hidden />
-              Maiores altas do dia
+              Maiores altas do dia (B3)
             </h3>
             {loading ? (
-              <div className="h-24 animate-pulse rounded-2xl bg-line/60" />
+              <Skeleton className="h-24" />
             ) : (
               <QuoteList quotes={movers?.gainers ?? []} aria-label="Maiores altas" />
             )}
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
-              Maiores quedas do dia
+              Maiores quedas do dia (B3)
             </h3>
             {loading ? (
-              <div className="h-24 animate-pulse rounded-2xl bg-line/60" />
+              <Skeleton className="h-24" />
             ) : (
               <QuoteList quotes={movers?.losers ?? []} aria-label="Maiores quedas" />
             )}
@@ -181,5 +285,18 @@ export function MercadoPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+function ChangePercent({ value }: { value: number }) {
+  const positive = value >= 0;
+  return (
+    <span
+      className="text-sm font-semibold tabular-nums"
+      style={{ color: positive ? 'var(--status-good)' : 'var(--status-bad)' }}
+    >
+      {positive ? '+' : ''}
+      {value.toFixed(2)}%
+    </span>
   );
 }

@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { Skeleton } from './Skeleton';
 
 interface StatCardProps {
   icon: LucideIcon;
@@ -18,7 +19,7 @@ export function StatCard({ icon: Icon, label, value, hint, loading, onClick }: S
         <span className="text-xs font-medium tracking-wide uppercase">{label}</span>
       </div>
       {loading ? (
-        <div className="mt-2 h-7 w-28 animate-pulse rounded-lg bg-line" />
+        <Skeleton className="mt-2 h-7 w-28 rounded-lg" />
       ) : (
         <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums">{value}</p>
       )}

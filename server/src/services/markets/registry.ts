@@ -1,5 +1,6 @@
 import { brapiAdapter, getMovers as getBrMovers } from './brapiAdapter.js';
 import { cryptoAdapter } from './cryptoAdapter.js';
+import { finnhubAdapter } from './finnhubAdapter.js';
 import type { AssetDetail, AssetRef, MarketAdapter, MarketId, Quote } from './types.js';
 
 /**
@@ -8,24 +9,38 @@ import type { AssetDetail, AssetRef, MarketAdapter, MarketId, Quote } from './ty
  * o de mercado (BR) segue aqui, o de cripto em cryptoAdapter.
  */
 
-const adapters: Record<MarketId, MarketAdapter> = { BR: brapiAdapter, CRYPTO: cryptoAdapter };
+const adapters: Record<MarketId, MarketAdapter> = {
+  BR: brapiAdapter,
+  CRYPTO: cryptoAdapter,
+  US: finnhubAdapter,
+};
 
-/** Separa "CRYPTO:BTCUSDT" em { market, ticker } quando o prefixo existe. */
+/** Mercados prontos para consulta agora (US depende de FINNHUB_API_KEY). */
+export function availableMarkets(): MarketId[] {
+  return (Object.keys(adapters) as MarketId[]).filter((id) => adapters[id].available());
+}
+
+export function adapterFor(market: MarketId): MarketAdapter {
+  return adapters[market];
+}
+
+/** Separa "CRYPTO:BTCUSDT" / "US:AAPL" em { market, ticker } quando há prefixo. */
 export function parsePrefixed(input: string): { market: MarketId | null; ticker: string } {
   const [maybePrefix, ...rest] = input.split(':');
   const upper = maybePrefix?.trim().toUpperCase();
-  if (rest.length > 0 && (upper === 'BR' || upper === 'CRYPTO')) {
+  if (rest.length > 0 && (upper === 'BR' || upper === 'CRYPTO' || upper === 'US')) {
     return { market: upper, ticker: rest.join(':').trim() };
   }
   return { market: null, ticker: input.trim() };
 }
 
 function matchByShape(ticker: string): MarketId | null {
-  const br = brapiAdapter.matches(ticker);
-  const crypto = cryptoAdapter.matches(ticker);
-  if (br && !crypto) return 'BR';
-  if (crypto && !br) return 'CRYPTO';
-  return null;
+  // Só resolve quando UM mercado reivindica o formato; empate vai para o lookup
+  // nos catálogos, que é mais caro mas não erra o mercado.
+  const claims = (['BR', 'CRYPTO', 'US'] as MarketId[]).filter((id) =>
+    adapters[id].matches(ticker),
+  );
+  return claims.length === 1 ? (claims[0] ?? null) : null;
 }
 
 /**
@@ -45,13 +60,19 @@ export async function resolveMarket(
   const byShape = matchByShape(upper);
   if (byShape) return { market: byShape, ticker: upper, ambiguous: false };
 
-  const [brRef, cryptoRef] = await Promise.all([
-    brapiAdapter.validate(upper).catch(() => null),
-    cryptoAdapter.validate(upper).catch(() => null),
-  ]);
-  if (brRef && cryptoRef) return { market: 'BR', ticker: upper, ambiguous: true };
-  if (cryptoRef) return { market: 'CRYPTO', ticker: upper, ambiguous: false };
-  return { market: 'BR', ticker: upper, ambiguous: false };
+  const candidates = availableMarkets();
+  const found = (
+    await Promise.all(
+      candidates.map(async (id) => ((await adapters[id].validate(upper).catch(() => null)) ? id : null)),
+    )
+  ).filter((id): id is MarketId => id !== null);
+
+  // Empate = mais de um catálogo tem o ticker. BR vence (é um app brasileiro) e
+  // o chamador recebe `ambiguous: true` para avisar o usuário.
+  if (found.length > 1) {
+    return { market: found.includes('BR') ? 'BR' : (found[0] ?? 'BR'), ticker: upper, ambiguous: true };
+  }
+  return { market: found[0] ?? 'BR', ticker: upper, ambiguous: false };
 }
 
 export async function getQuotesMulti(rawTickers: string[]): Promise<{ quotes: Quote[]; partial: boolean }> {
@@ -112,7 +133,7 @@ export interface SearchResultItem extends AssetRef {
 
 export interface SearchResult {
   results: SearchResultItem[];
-  sources: Record<MarketId, 'ok' | 'unavailable'>;
+  sources: Partial<Record<MarketId, 'ok' | 'unavailable'>>;
 }
 
 export async function searchAssets(
@@ -120,8 +141,9 @@ export async function searchAssets(
   marketParam: MarketId | undefined,
   limit: number,
 ): Promise<SearchResult> {
-  const targets: MarketId[] = marketParam ? [marketParam] : ['BR', 'CRYPTO'];
-  const sources: Record<MarketId, 'ok' | 'unavailable'> = { BR: 'ok', CRYPTO: 'ok' };
+  const targets: MarketId[] = marketParam ? [marketParam] : availableMarkets();
+  const sources: Partial<Record<MarketId, 'ok' | 'unavailable'>> = {};
+  for (const id of targets) sources[id] = 'ok';
 
   const refsByMarket = await Promise.all(
     targets.map(async (market) => {

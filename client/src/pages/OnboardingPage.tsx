@@ -40,7 +40,7 @@ export function OnboardingPage() {
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
       <p className="mb-2 text-sm font-medium uppercase tracking-widest text-gold">Boas-vindas</p>
-      <h1 className="text-2xl font-bold tracking-tight">Vamos descobrir seu perfil de investidor</h1>
+      <h1 className="font-display text-2xl font-bold tracking-tight">Vamos descobrir seu perfil de investidor</h1>
       <p className="mt-2 text-sm text-ink-muted">
         Cinco perguntas rápidas. O resultado orienta as sugestões do copiloto — você pode refazer
         quando quiser no Perfil.

@@ -16,13 +16,18 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE: z.string().min(1).optional(),
   GEMINI_API_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  GROQ_API_KEY: z.string().min(1).optional(),
   // Token do brapi.dev (opcional no plano gratuito; melhora limites).
   BRAPI_TOKEN: z.string().min(1).optional(),
+  // Mercado internacional (finnhub.io — plano gratuito). Sem chave, a aba
+  // Internacional responde 503 em vez de inventar número.
+  FINNHUB_API_KEY: z.string().min(1).optional(),
   // Modelos de IA (defaults sensatos; sobrescreva se quiser).
   CLAUDE_MODEL: z.string().min(1).default('claude-sonnet-5'),
   GEMINI_MODEL: z.string().min(1).default('gemini-2.5-flash'),
-  // Qual provedor está ativo agora — trocar para 'claude' depois é só isso.
-  AI_PROVIDER: z.enum(['gemini', 'claude']).default('gemini'),
+  GROQ_MODEL: z.string().min(1).default('llama-3.3-70b-versatile'),
+  // Provedor da análise de carteira: Groq/Llama (grátis) ou Claude — só trocar aqui.
+  ANALYZE_PROVIDER: z.enum(['groq', 'claude']).default('groq'),
   // Mercado cripto (Binance), só leitura, sem API key. 451 por região? troque a base.
   BINANCE_BASE_URL: z.string().url().default('https://api.binance.com'),
   // Nº de proxies reversos na frente do server (exigido pelo express-rate-limit).
@@ -53,9 +58,9 @@ export const env = parsed.data;
 
 const SEMPRE_OBRIGATORIAS = ['JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE'] as const;
 
-const obrigatoriasEmProducao: string[] = [...SEMPRE_OBRIGATORIAS];
-if (env.AI_PROVIDER === 'gemini') obrigatoriasEmProducao.push('GEMINI_API_KEY');
-if (env.AI_PROVIDER === 'claude') obrigatoriasEmProducao.push('ANTHROPIC_API_KEY');
+export const ANALYZE_KEY = env.ANALYZE_PROVIDER === 'claude' ? 'ANTHROPIC_API_KEY' : 'GROQ_API_KEY';
+
+const obrigatoriasEmProducao: string[] = [...SEMPRE_OBRIGATORIAS, 'GEMINI_API_KEY', ANALYZE_KEY];
 
 const pendentes = (
   [
@@ -64,7 +69,7 @@ const pendentes = (
     'SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE',
     'GEMINI_API_KEY',
-    'ANTHROPIC_API_KEY',
+    ANALYZE_KEY,
   ] as const
 ).filter((key) => env[key] === undefined);
 

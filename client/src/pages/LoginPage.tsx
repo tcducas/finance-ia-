@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from 'react';
+import { LineChart, Lock, ShieldCheck } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -140,16 +141,67 @@ const inputClass =
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh place-items-center px-6 py-10">
-      <div className="w-full max-w-sm">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-white">
-            A
-          </span>
-          <span className="text-lg font-bold tracking-tight">Aura Finance</span>
-        </Link>
-        <div className="rounded-2xl border border-line bg-elevated/70 p-6 backdrop-blur">{children}</div>
+    <div className="grid min-h-dvh lg:grid-cols-[1fr_1fr]">
+      {/* Formulário */}
+      <div className="grid place-items-center px-6 py-10">
+        <div className="w-full max-w-sm">
+          <Link to="/" className="mb-8 flex items-center gap-2">
+            <span className="grid size-9 place-items-center rounded-xl bg-gold font-extrabold text-white">
+              A
+            </span>
+            <span className="font-display text-lg font-bold tracking-tight">Aura Finance</span>
+          </Link>
+          <h1 className="mb-1 font-display text-2xl font-bold tracking-tight">
+            Entre na sua conta
+          </h1>
+          <p className="mb-6 text-sm text-ink-muted">
+            Seus dados ficam isolados por usuário no banco, com RLS.
+          </p>
+          {children}
+        </div>
       </div>
+
+      {/* Painel de marca — some no mobile, onde o formulário é o que importa. */}
+      <aside className="relative hidden items-center overflow-hidden border-l border-line bg-elevated/50 px-12 lg:flex">
+        <div className="aurora" aria-hidden />
+        <div className="relative max-w-md">
+          <p className="text-sm font-medium tracking-widest text-gold uppercase">
+            Copiloto financeiro
+          </p>
+          <p className="mt-4 font-display text-3xl leading-tight font-bold tracking-tight text-balance">
+            Saiba onde investir — e por quê.
+          </p>
+          <ul className="mt-8 space-y-4">
+            {[
+              {
+                icon: ShieldCheck,
+                title: 'Não executa ordens',
+                text: 'O app analisa e direciona. Quem aplica é você, na sua corretora.',
+              },
+              {
+                icon: Lock,
+                title: 'Anonimizado antes da IA',
+                text: 'Vão tickers e percentuais; nunca nome, CPF ou patrimônio absoluto.',
+              },
+              {
+                icon: LineChart,
+                title: 'Método à mostra',
+                text: 'VPL, TIR, payback e concentração — cada número com o cálculo explicado.',
+              },
+            ].map((item) => (
+              <li key={item.title} className="flex gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-line bg-canvas text-gold">
+                  <item.icon className="size-4.5" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="text-sm text-ink-muted">{item.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
     </div>
   );
 }

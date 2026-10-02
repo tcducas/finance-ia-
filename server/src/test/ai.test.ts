@@ -1,12 +1,27 @@
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../app.js';
 import { aporteBand } from '../services/aiService.js';
-import { makeToken } from './helpers.js';
+import { makeToken, stubDb } from './helpers.js';
 
-// Sem GEMINI_API_KEY/ANTHROPIC_API_KEY no ambiente de teste: as rotas devem
+// attachPlan lê profiles.plan e a cota de IA lê ai_usage em toda chamada: sem
+// este duplo, a requisição esperaria um Supabase real e estouraria o timeout.
+vi.mock('../lib/supabase.js', () => ({
+  createUserClient: vi.fn(),
+  createServiceClient: vi.fn(),
+}));
+
+const supabase = vi.mocked(await import('../lib/supabase.js'));
+
+// Sem GEMINI_API_KEY/GROQ_API_KEY no ambiente de teste: as rotas devem
 // falhar com 503 AI_NOT_CONFIGURED — nunca vazar erro interno.
 const app = createApp();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  supabase.createUserClient.mockReturnValue(stubDb());
+  supabase.createServiceClient.mockReturnValue(stubDb({ count: 0 }));
+});
 
 describe('POST /api/ai/chat', () => {
   it('exige autenticação (401)', async () => {

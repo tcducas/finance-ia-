@@ -1,6 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useFinance } from '../../context/FinanceContext';
-import { EXPENSE_CATEGORIES } from '../../lib/categories';
+import {
+  CUSTOM_CATEGORY_MAX,
+  EXPENSE_CATEGORIES,
+  OTHER_ID,
+  resolveCategory,
+} from '../../lib/categories';
 import { Modal } from '../ui/Modal';
 
 const inputClass =
@@ -14,6 +19,7 @@ interface BudgetFormProps {
 export function BudgetForm({ open, onClose }: BudgetFormProps) {
   const { budgets, saveBudget } = useFinance();
   const [category, setCategory] = useState('mercado');
+  const [customCategory, setCustomCategory] = useState('');
   const [limit, setLimit] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -21,6 +27,9 @@ export function BudgetForm({ open, onClose }: BudgetFormProps) {
   useEffect(() => {
     if (open) setFormError(null);
   }, [open]);
+
+  // Categoria de verdade: em "Outros" quem manda é o texto livre.
+  const resolved = resolveCategory(category, customCategory);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -31,8 +40,9 @@ export function BudgetForm({ open, onClose }: BudgetFormProps) {
     }
     setSubmitting(true);
     try {
-      await saveBudget({ category, monthly_limit: value });
+      await saveBudget({ category: resolved, monthly_limit: value });
       setLimit('');
+      setCustomCategory('');
       onClose();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao salvar.');
@@ -41,7 +51,7 @@ export function BudgetForm({ open, onClose }: BudgetFormProps) {
     }
   }
 
-  const existing = budgets.find((b) => b.category === category);
+  const existing = budgets.find((b) => b.category === resolved);
 
   return (
     <Modal open={open} title="Definir orçamento" onClose={onClose}>
@@ -60,6 +70,24 @@ export function BudgetForm({ open, onClose }: BudgetFormProps) {
             ))}
           </select>
         </label>
+
+        {category === OTHER_ID && (
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">
+              Qual categoria? <span className="font-normal text-ink-muted">(opcional)</span>
+            </span>
+            <input
+              value={customCategory}
+              maxLength={CUSTOM_CATEGORY_MAX}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              placeholder="Ex.: Pet, Academia, Presentes…"
+              className={inputClass}
+            />
+            <span className="mt-1 block text-xs text-ink-muted">
+              Em branco, o orçamento fica em “Outros”.
+            </span>
+          </label>
+        )}
 
         <label className="block text-sm">
           <span className="mb-1 block font-medium">Limite mensal (R$)</span>

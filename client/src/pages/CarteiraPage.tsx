@@ -9,6 +9,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { useState } from 'react';
+import { PatrimonioEvolution } from '../components/charts/PatrimonioEvolution';
+import { PortfolioPanel } from '../components/portfolio/PortfolioPanel';
 import { SpendingDonut } from '../components/charts/SpendingDonut';
 import { CopilotInsightCard } from '../components/copilot/CopilotInsightCard';
 import { CsvImportDialog } from '../components/import/CsvImportDialog';
@@ -20,12 +22,13 @@ import { useFinance } from '../context/FinanceContext';
 import { AssetList } from '../components/assets/AssetList';
 import { formatCurrency } from '../lib/format';
 
-type Tab = 'fluxo' | 'patrimonio';
+type Tab = 'fluxo' | 'patrimonio' | 'investimentos';
 
 /**
  * Tela: Minha Carteira — rota `/app` (index, HOME pós-login)
  * Menu: "Minha Carteira" (1º item)
- * Fluxo de caixa do mês (movimentações + gráfico por categoria) e aba Patrimônio.
+ * Fluxo de caixa do mês, aba Patrimônio e aba Investimentos (carteira importada
+ * + panorama analítico: TIR, VPL, payback, risco, liquidez e alinhamento).
  */
 export function CarteiraPage() {
   const { summary, spending, budgets, assets, loading, error } = useFinance();
@@ -51,10 +54,12 @@ export function CarteiraPage() {
     <section aria-labelledby="carteira-titulo" className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="carteira-titulo" className="text-2xl font-bold tracking-tight">
+          <h2 id="carteira-titulo" className="font-display text-2xl font-bold tracking-tight">
             Minha Carteira
           </h2>
-          <p className="text-sm text-ink-muted">Entradas, saídas e patrimônio do mês.</p>
+          <p className="text-sm text-ink-muted">
+            Entradas, saídas, patrimônio e a análise da sua carteira de investimentos.
+          </p>
         </div>
 
         <div role="tablist" aria-label="Seções da carteira" className="flex rounded-full border border-line bg-elevated p-1">
@@ -62,6 +67,7 @@ export function CarteiraPage() {
             [
               { id: 'fluxo', label: 'Fluxo de caixa' },
               { id: 'patrimonio', label: 'Patrimônio' },
+              { id: 'investimentos', label: 'Investimentos' },
             ] as const
           ).map(({ id, label }) => (
             <button
@@ -154,6 +160,13 @@ export function CarteiraPage() {
             />
           </div>
 
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wide">
+              Evolução do patrimônio
+            </h3>
+            <PatrimonioEvolution />
+          </div>
+
           <CopilotInsightCard />
 
           <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
@@ -183,8 +196,13 @@ export function CarteiraPage() {
             </div>
           </div>
         </>
+      ) : tab === 'patrimonio' ? (
+        <div className="space-y-6">
+          <PatrimonioEvolution />
+          <AssetList />
+        </div>
       ) : (
-        <AssetList />
+        <PortfolioPanel />
       )}
 
       <CsvImportDialog
